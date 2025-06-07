@@ -1,0 +1,25 @@
+.menuitem {
+  display: block;
+  padding: 0.5rem 1rem; /* px-4 py-2 (16px horizontal, 8px vertical) */
+  font-size: 0.875rem;  /* text-sm (14px) */
+  color: white;
+  text-decoration: none; /* para quitar el subrayado si es necesario */
+}
+
+
+.menuitem {
+  color: #000103; /* Ejemplo: azul tipo Tailwind text-blue-600 */
+  transition: color 0.3s ease;
+  cursor: pointer;
+}
+
+.menuitem:hover {
+  color: #6b7280; /* Ejemplo: gris tipo Tailwind text-gray-500 */
+}
+
+.linkreset {
+  all: unset;           /* Elimina todos los estilos del navegador */
+  display: inline;      /* Puedes usar block o inline según necesites */
+  color: inherit;       /* Hereda el color del li */
+  text-decoration: none;/* Quita subrayado */
+}
