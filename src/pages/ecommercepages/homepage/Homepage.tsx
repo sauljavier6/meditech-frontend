@@ -7,7 +7,7 @@ function HomePage() {
   return (
     <div>
       <Carousel />
-        <BannerBar />
+      <BannerBar />
       <BestProducts />
       <CatalogoBanner />
     </div>

@@ -103,7 +103,9 @@ const EcommerceLayout = () => {
           </div>
         </div>
       </nav>
-      <Outlet />
+      <div className="pt-[120px] w-full">
+        <Outlet />
+      </div>
       <footer className="bg-blue-800 text-white">
         <div className="container mx-auto px-6 py-10 flex flex-col md:flex-row gap-8">
 

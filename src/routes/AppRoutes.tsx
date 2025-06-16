@@ -17,6 +17,8 @@ import HomePage from '../pages/ecommercepages/homepage/Homepage';
 import EcommerceLayout from '../components/layout/ecommercelayout/EcommerceLayout';
 
 import EProductsPage from '../pages/ecommercepages/productpage/ProductPage';
+import CartPage from '../pages/ecommercepages/cartpage/CartPage';
+import ProductDetails from '../pages/ecommercepages/productdetails/ProductDetails';
 
 const AppRoutes = () => {
 
@@ -27,6 +29,8 @@ const AppRoutes = () => {
         <Route index element={<HomePage />} />
         <Route path="productos" element={<EProductsPage />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="carrito" element={<CartPage />} /> 
+        <Route path="detalles/:id" element={<ProductDetails />} /> 
       </Route>
 
 

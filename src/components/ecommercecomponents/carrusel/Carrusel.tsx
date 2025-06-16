@@ -35,7 +35,7 @@ function Carousel() {
         onClick={() => setCurrent((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
         className="absolute top-1/2 left-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70"
       >
-        <img src="/public/icons/flechaabajo.png" alt="flechaabajo" className='h-4 w-4 rotate-90'/>
+        <img src="/public/icons/flechasinfondo.png" alt="flechaabajo" className='h-4 w-4 rotate-90'/>
       </button>
 
       {/* Botón derecho */}
@@ -43,7 +43,7 @@ function Carousel() {
         onClick={() => setCurrent((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
         className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70"
       >
-        <img src="/public/icons/flechaabajo.png" alt="flechaabajo" className='h-4 w-4 rotate-270'/>
+        <img src="/public/icons/flechasinfondo.png" alt="flechaabajo" className='h-4 w-4 rotate-270'/>
       </button>
 
       {/* Botones de navegación inferior */}

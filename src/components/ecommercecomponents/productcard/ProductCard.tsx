@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Categoria {
   ID_Categoria: number;
@@ -23,9 +24,13 @@ interface ProductProps {
 }
 
 export default function ProductCard({ product }: { product: ProductProps }) {
+  const navigate = useNavigate();
+
+
   const handleDetailsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Evita que se dispare otro evento padre si es necesario
     console.log("Detalles del producto:", product);
+    navigate(`/detalles/${product.ID_Product}`); // redirige a /detalles
   };
 
   return (
