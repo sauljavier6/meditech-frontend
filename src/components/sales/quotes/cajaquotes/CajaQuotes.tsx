@@ -1,20 +1,42 @@
-  import React, { useState } from "react";
-  import styles from "./CajaQuotes.module.scss";
+import React, { useEffect, useState } from "react";
+import styles from "./CajaQuotes.module.scss";
 import ModalCustomers from "../../customers/modalcustomers/ModalCustomers";
+import { useQuery } from "@tanstack/react-query";
+import { searchProducts } from "../../../../api/Post/SaleApi/SaleApi";
+
+interface SaleProduct {
+  id: number;
+  name: string;
+  quantity: number;
+  price: number;
+}
 
 
-  const CajasQuotes = () => {
-    const [products, setProducts] = useState([
-      { id: 1, name: "Paracetamol", quantity: 2, price: 50 },
-      { id: 2, name: "Ibuprofeno", quantity: 1, price: 70 },
-    ]);
+  const CajasQuotes = () => {    
+    const [search, setSearch] = useState('');
+    const [debounced, setDebounced] = useState(search);
+    const [products, setProducts] = useState<SaleProduct[]>([]);
+
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedProductsDelete, setSelectedProductsDelete] = useState<number[]>([]);
     const allSelected = products.length > 0 && products.every((p) => selectedProductsDelete.includes(p.id));
 
     const subtotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
-    const iva = subtotal * 0.16; // IVA 16%
+    const iva = subtotal * 0.16;
     const total = subtotal + iva; 
+
+    useEffect(() => {
+      const timeout = setTimeout(() => setDebounced(search), 300);
+      return () => clearTimeout(timeout);
+    }, [search]);
+
+    const { data, isLoading } = useQuery({
+      queryKey: ['search', debounced],
+      queryFn: () => searchProducts(debounced || ''),
+      enabled: debounced.length > 0,
+    });
+
+    console.log('data',data)
 
     const handleCreateCustomer = () => {
       setModalOpen(true);
@@ -24,16 +46,71 @@ import ModalCustomers from "../../customers/modalcustomers/ModalCustomers";
       <div className="p-6 bg-white rounded-xl shadow-md max-w-3xl mx-auto">
         <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Caja</h2>
 
-        <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col mb-4 relative">
+        <div className="flex items-center">
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar producto..."
             className="border rounded px-3 py-2 w-full mr-2"
           />
-          <button onClick={() => {setProducts((prev) => prev.filter((p) => !selectedProductsDelete.includes(p.id)));setSelectedProductsDelete([]);}} className={styles.removeButton}>
+          <button
+            onClick={() => {
+              setProducts((prev) => prev.filter((p) => !selectedProductsDelete.includes(p.id)));
+              setSelectedProductsDelete([]);
+            }}
+            className={styles.removeButton}
+          >
             Quitar
           </button>
         </div>
+
+        {/* Lista de sugerencias */}
+        {search.length > 0 && data?.length > 0 && (
+          <ul className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded shadow-md z-10 max-h-60 overflow-y-auto">
+            {data.map((product) => (
+              <li
+                key={product.ID_Product}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => {
+                  setProducts((prev) => {
+                    const exists = prev.find(p => p.id === product.ID_Product);
+                    if (exists) {
+                      return prev.map(p =>
+                        p.id === product.ID_Product
+                          ? { ...p, quantity: p.quantity + 1 }
+                          : p
+                      );
+                    } else {
+                      return [
+                        ...prev,
+                        {
+                          id: product.ID_Product,
+                          name: product.Description,
+                          quantity: 1,
+                          price: product.Stock?.[0]?.Saleprice || 0,
+                        }
+                      ];
+                    }
+                  });
+                  setSearch('');
+                }}
+              >
+                {product.Description} - {product.Code}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Resultado vacío */}
+        {search.length > 0 && !isLoading && data?.length === 0 && (
+          <div className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded shadow-md z-10 px-4 py-2 text-gray-500">
+            No se encontraron productos.
+          </div>
+        )}
+      </div>
+
 
         <div className="border rounded p-4 mb-4">
           <h3 className="font-semibold mb-2">Productos en venta</h3>

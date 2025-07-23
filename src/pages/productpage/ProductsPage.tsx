@@ -3,18 +3,65 @@ import { useState } from "react";
 import ProductsList from "../../components/products/productlist/ProductsList";
 import styles from "./ProductsPage.module.scss";
 import ModalProduct from "../../components/products/modalproduct/ModalProduct";
+import { useMutation, useQueryClient  } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import { deleteMultipleProducts } from "../../api/Post/ProductApi/ProductApi";
 
 const ProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [productToEdit, setProductToEdit] = useState<number | null>(null);
+  const [resetChecks, setResetChecks] = useState(false);
 
-const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
+    mutationFn: deleteMultipleProducts,
+    onError: (error) => {
+        toast.error(`${error.message}`, {
+        position: "top-right",
+        });
+    },
+    onSuccess: () => {
+        toast.success("Producto registrado con éxito", {
+        position: "top-right",
+        progressClassName: "custom-progress",
+        });
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const handleCreateProduct = () => {
     setModalOpen(true);
+    setSelectedIds([])
   };
+
+  const handleDeleteProduct = () => {
+    mutate(selectedIds);
+    setSelectedIds([])
+  };
+
+  const handleEdit = () => {
+    if (selectedIds.length === 1) {
+      setProductToEdit(selectedIds[0]);
+      setModalOpen(true);
+    } else if (selectedIds.length > 1) {
+      toast.warn('Solo puedes editar un producto a la vez');
+    }
+  };
+
+  const handleClose = () => {
+    setModalOpen(false);
+    setProductToEdit(null);
+    setResetChecks(true);
+  };
+
+  console.log('selectedIds', selectedIds)
 
   return (
     <div className="p-4 bg-gray-50 rounded-lg">
@@ -38,26 +85,37 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </button>
 
           <button
-            onClick={handleCreateProduct}
-            className={styles.buttonEditarProducto}
+            onClick={handleEdit}
+            disabled={selectedIds.length !== 1}
+            className={`px-4 py-2 rounded font-semibold text-white transition-colors duration-200 
+              ${selectedIds.length !== 1
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                : styles.buttonEditarProducto}
+            `}
           >
             Editar
           </button>
 
           <button
-            onClick={handleCreateProduct}
-            className={styles.buttonEliminarProducto}
+            onClick={handleDeleteProduct}
+            disabled={selectedIds?.length === 0}
+            className={`px-4 py-2 rounded font-semibold text-white transition-colors duration-200 
+              ${selectedIds?.length === 0 
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                : styles.buttonEliminarProducto}
+            `}
           >
             Eliminar
           </button>
         </div>
       </div>
 
-      <ProductsList/>
+      <ProductsList onDelete={(id) => setSelectedIds(id)} resetChecks={resetChecks}
+      onResetComplete={() => setResetChecks(false)}/>
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <ModalProduct onClose={() => setModalOpen(false)} />
+          <ModalProduct onClose={handleClose}  onEdit={productToEdit} />
         </div>
       )}
     </div>

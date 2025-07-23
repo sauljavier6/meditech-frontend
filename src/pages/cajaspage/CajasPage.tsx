@@ -8,20 +8,18 @@ import DetallesCaja from "../../components/cajas/detallescajas/DetallesCajas";
 import SalesByBatchList from "../../components/cajas/salesbybatchlist/SalesByBatchList";
 
 const CajasPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [openCajas, setOpenCajas] = useState(false);
   const [openCajasDetalles, setOpenCajasDetalles] = useState(false);
+  const [loteSelected, setLoteSelected] = useState<string>("");
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
 
   const handleCreateCajas = () => {
     setModalOpen(true);
   };
 
-  const handleOpenCaja = () => {
+  const handleOpenCaja = (Lote: string) => {
+    setLoteSelected(Lote);
     setOpenCajas(true);
   };
 
@@ -36,8 +34,6 @@ const CajasPage = () => {
           <input
             type="text"
             placeholder="Buscar lote..."
-            value={searchTerm}
-            onChange={handleSearchChange}
             className="px-3 py-2 border border-gray-300 rounded-md w-full sm:w-64"
           />
 
@@ -103,7 +99,7 @@ const CajasPage = () => {
       </div>
 
       {!openCajasDetalles && (
-        <Cajas /> 
+        <Cajas Lote={loteSelected} />
       )}
 
       {openCajasDetalles && (

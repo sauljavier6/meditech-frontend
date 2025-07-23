@@ -1,21 +1,151 @@
-  import React, { useState } from "react";
-  import styles from "./Cajas.module.scss";
+import React, { useEffect, useState } from "react";
+import styles from "./Cajas.module.scss";
 import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers";
+import { postCustomerSale, postSale, searchProducts } from "../../../api/Post/SaleApi/SaleApi";
+import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient  } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import { getStates } from "../../../api/Post/StateApi/StateApi";
+import { getPayments } from "../../../api/Post/PaymentApi/PaymentApi";
+
+interface SaleProduct {
+  id: number;
+  productId: number;
+  name: string;
+  quantity: number;
+  price: number;
+  maxAmount?: number;
+  stockVariant?: string;
+}
+
+interface SaleItem {
+  productId: number;
+  stockId: number;
+  quantity: number;
+  price: number;
+  subtotal: number;
+}
+
+interface PaymentSale {
+  ID_Payment: number;
+  Description: string;
+  Monto: number;
+  ReferenceNumber: string;
+}
+
+interface SaleData {
+  ID_User: number;
+  Total: number;
+  Balance_Total: number;
+  ID_State: number;
+  Payment: PaymentSale[];
+  ID_Operador: number;
+  Lote: string;
+  items: SaleItem[];
+}
+
+interface CustomerFormData {
+  nombre: string;
+  telefono: string;
+  correo: string;
+  razonSocial?: string;
+  codigoPostal?: string;
+  rfc?: string;
+  regimenFiscal?: string;
+}
+
+export interface CustomerResponseData extends CustomerFormData {
+  ID_User: number;
+}
+
+interface CajasProps {
+  Lote: string;
+}
+
+  export default function Cajas({ Lote }: CajasProps) {
+    const [search, setSearch] = useState('');
+    const [debounced, setDebounced] = useState(search);
+    const [products, setProducts] = useState<SaleProduct[]>([]);
+    const [customerData, setCustomerData] = useState<CustomerResponseData | null>(null);
+    const [selectedState, setSelectedState] = useState(2);
+    const [selectedPayment, setSelectedPayment] = useState<PaymentSale[]>([]);
+    const [paymentMethod, setPaymentMethod] = useState("");
+    const [amount, setAmount] = useState("");
+    const [reference, setReference] = useState("");
 
 
-  const Cajas = () => {
-    const [products, setProducts] = useState([
-      { id: 1, name: "Paracetamol", quantity: 2, price: 50 },
-      { id: 2, name: "Ibuprofeno", quantity: 1, price: 70 },
-    ]);
     const [selectedProductsDelete, setSelectedProductsDelete] = useState<number[]>([]);
     const allSelected = products.length > 0 && products.every((p) => selectedProductsDelete.includes(p.id));
     const [modalOpen, setModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"caja" | "retiro">("caja");
 
     const subtotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
-    const iva = subtotal * 0.16; // IVA 16%
+    const iva = subtotal * 0.16;
     const total = subtotal + iva;
+
+    const idusuario = localStorage.getItem('idusuario')
+
+    useEffect(() => {
+      const timeout = setTimeout(() => setDebounced(search), 300);
+      return () => clearTimeout(timeout);
+    }, [search]);
+
+    const { data, isLoading } = useQuery({
+      queryKey: ['search', debounced],
+      queryFn: () => searchProducts(debounced || ''),
+      enabled: debounced.length > 0,
+    });
+
+    const { data: states } = useQuery({
+      queryKey: ['states'],
+      queryFn: getStates,
+    });
+
+    const { data: paymentsData } = useQuery({
+      queryKey: ['payments'],
+      queryFn: getPayments,
+    });
+
+    const queryClient = useQueryClient();
+
+    const { mutate } = useMutation({
+      mutationFn: postSale,
+      onError: (error) => {
+          toast.error(`${error.message}`, {
+          position: "top-right",
+          });
+      },
+      onSuccess: () => {
+          setProducts([]);
+          setSelectedPayment([])
+          setPaymentMethod("");
+          setAmount("");
+          setReference("");
+          toast.success("Venta registrada con éxito", {
+          position: "top-right",
+          progressClassName: "custom-progress",
+          });
+          queryClient.invalidateQueries({ queryKey: ['sale'] });
+      },
+    });
+
+    const { mutate: customerCreateMutate } = useMutation({
+      mutationFn: postCustomerSale,
+      onError: (error) => {
+          toast.error(`${error.message}`, {
+          position: "top-right",
+          });
+      },
+      onSuccess: (data) => {
+          setCustomerData(data.data);
+          setProducts([]);
+          toast.success("Cliente registrado con éxito", {
+          position: "top-right",
+          progressClassName: "custom-progress",
+          });
+          queryClient.invalidateQueries({ queryKey: ['customersale'] });
+      },
+    });
 
     const handleRetiroSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -32,9 +162,74 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
       console.log("Datos del formulario:", data);
     };
 
+    const handleSaveSale = async () => {
+      if (products.length === 0) {
+        alert("Debes seleccionar productos para completar la venta.");
+        return;
+      }
+
+      const saleData: SaleData = {
+        ID_User: customerData?.ID_User ?? 0,
+        Total: total,
+        Balance_Total: total,
+        ID_State: selectedState,
+        ID_Operador: Number(idusuario),
+        Lote: Lote,
+        Payment: selectedPayment.map(p => ({
+          ID_Payment: p.ID_Payment,
+          Description: p.Description,
+          Monto: p.Monto,
+          ReferenceNumber: p.ReferenceNumber,
+        })),
+        items: products.map(p => ({
+          productId: p.productId,
+          stockId: p.id,
+          quantity: p.quantity,
+          price: p.price,
+          subtotal: p.price * p.quantity,
+        })),
+      };
+
+      mutate(saleData);
+    };
+
+
     const handleCreateCustomer = () => {
       setModalOpen(true);
     };
+
+    const handleSaveCustomer = (data: CustomerFormData) => {
+      console.log("Cliente guardado:", data);
+      customerCreateMutate(data);
+    };
+
+    const handleAddPayment = () => {
+      if (!paymentMethod || !amount) return;
+
+      const selectedPaymentData = paymentsData.data.find(
+        (p: PaymentSale) => p.ID_Payment === Number(paymentMethod)
+      );
+
+      setSelectedPayment((prev) => [
+        ...prev,
+        {
+          ID_Payment: Number(paymentMethod),
+          Description: selectedPaymentData?.Description || "",
+          Monto: parseFloat(amount),
+          ReferenceNumber: reference || "",
+        },
+      ]);
+
+      // Limpiar campos
+      setPaymentMethod("");
+      setAmount("");
+      setReference("");
+    };
+
+    const handleDeletePayment = (index: number) => {
+      setSelectedPayment((prev) => prev.filter((_, i) => i !== index));
+    };
+
 
     return (
       <div className="p-6 bg-white rounded-xl shadow-md max-w-3xl mx-auto">
@@ -68,16 +263,83 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
 
         {activeTab === "caja" && (  
         <>
-        <div className="flex justify-between items-center mb-4">
-          <input
-            type="text"
-            placeholder="Buscar producto..."
-            className="border rounded px-3 py-2 w-full mr-2"
-          />
-          <button onClick={() => {setProducts((prev) => prev.filter((p) => !selectedProductsDelete.includes(p.id)));setSelectedProductsDelete([]);}} className={styles.removeButton}>
-            Quitar
-          </button>
+        <div className="mb-4 relative">
+          <div className="flex justify-between items-center">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar producto..."
+              className="border rounded px-3 py-2 w-full mr-2"
+            />
+            <button
+              onClick={() => {
+                setProducts((prev) =>
+                  prev.filter((p) => !selectedProductsDelete.includes(p.id))
+                );
+                setSelectedProductsDelete([]);
+              }}
+              className={styles.removeButton}
+            >
+              Quitar
+            </button>
+          </div>
+
+          {/* Lista de sugerencias */}
+          {data?.map((product) => (
+            <li
+              key={product.ID_Product}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <span>{product.Description} - {product.Code}</span>
+              <ul className="pl-4">
+                {product.Stock?.map((variant) => (
+                  <li
+                    key={variant.ID_Stock}
+                    onClick={() => {
+                      setProducts((prev) => {
+                        const exists = prev.find(p => p.id === variant.ID_Stock);
+                        if (exists) {
+                          return prev.map(p =>
+                            p.id === variant.ID_Stock
+                              ? { ...p, quantity: p.quantity + 1 }
+                              : p
+                          );
+                        } else {
+                          return [
+                            ...prev,
+                            {
+                              id: variant.ID_Stock,
+                              productId: product.ID_Product,
+                              name: `${product.Description} - ${variant.Description}`,
+                              quantity: 1,
+                              price: variant.Saleprice,
+                              maxAmount: variant.Amount,
+                              stockVariant: variant.Description,
+                            }
+                          ];
+                        }
+                      });
+                      setSearch('');
+                    }}
+
+                    className="py-1 pl-4 hover:bg-gray-200 cursor-pointer"
+                  >
+                    Variante: {variant.Description} - ${variant.Saleprice}
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+
+          {/* Resultado vacío */}
+          {search.length > 0 && !isLoading && data?.length === 0 && (
+            <div className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded shadow-md z-10 px-4 py-2 text-gray-500">
+              No se encontraron productos.
+            </div>
+          )}
         </div>
+
 
         <div className="border rounded p-4 mb-4">
           <h3 className="font-semibold mb-2">Productos en venta</h3>
@@ -90,9 +352,9 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
                     checked={allSelected}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedProductsDelete(products.map((p) => p.id)); // Marca todos
+                        setSelectedProductsDelete(products.map((p) => p.id));
                       } else {
-                        setSelectedProductsDelete([]); // Desmarca todos
+                        setSelectedProductsDelete([]);
                       }
                     }}
                   />
@@ -113,20 +375,38 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
                       onChange={(e) => {
                         const checked = e.target.checked;
                         setSelectedProductsDelete((prev) =>
-                          checked
-                            ? [...prev, p.id]
-                            : prev.filter((id) => id !== p.id)
+                          checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
                         );
                       }}
                     />
                   </td>
                   <td className="py-1">{p.name}</td>
-                  <td className="text-center">{p.quantity}</td>
+                  <td className="text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      max={p.maxAmount || 999}
+                      value={p.quantity}
+                      onChange={(e) => {
+                        const newQuantity = parseInt(e.target.value);
+                        setProducts((prev) =>
+                          prev.map((item) =>
+                            item.id === p.id
+                              ? { ...item, quantity: newQuantity }
+                              : item
+                          )
+                        );
+                      }}
+                      className="w-16 text-center border rounded px-1 py-0.5"
+                      required
+                    />
+                  </td>
                   <td className="text-center">${p.price}</td>
-                  <td className="text-center">${p.price * p.quantity}</td>
+                  <td className="text-center">${(p.price * p.quantity).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
+
           </table>
         </div>
 
@@ -136,13 +416,137 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
           </button>
 
           <div className="text-sm w-full md:w-auto">
+            <select
+              id="tipoPago"
+              name="tipoPago"
+              className="border rounded px-3 py-2 w-full md:w-auto"
+              value={selectedState}
+              onChange={(e) => setSelectedState(Number(e.target.value))}
+            >
+              <option value="" disabled>
+                Selecciona un estado
+              </option>
+
+              {isLoading && <option>Cargando...</option>}
+
+              {states?.map((state: any) => (
+                <option key={state.ID_State} value={state.ID_State}>
+                  {state.Description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          
+          <div className="text-sm w-full md:w-auto">
+            <select
+              id="metodoPago"
+              name="metodoPago"
+              className="border rounded px-3 py-2 w-full md:w-auto"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <option value="">Selecciona un método de pago</option>
+              {paymentsData?.data?.map((payment: any) => (
+                <option key={payment.ID_Payment} value={payment.ID_Payment}>
+                  {payment.Description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+
+          <div className="text-sm w-full md:w-auto">
             <p>Subtotal: ${subtotal.toFixed(2)}</p>
             <p>IVA (16%): ${iva.toFixed(2)}</p>
             <p className="font-semibold">Total: ${total.toFixed(2)}</p>
           </div>
         </div>
 
-        <div className="flex gap-4 justify-end">
+        {/* Formulario de monto y referencia */}
+        {paymentMethod && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="paymentAmount" className="block text-sm font-medium text-gray-700">
+                Monto del pago
+              </label>
+              <input
+                type="number"
+                id="paymentAmount"
+                name="paymentAmount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Ej. 500.00"
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="reference" className="block text-sm font-medium text-gray-700">
+                Número de referencia/Notas
+              </label>
+              <input
+                type="text"
+                id="reference"
+                name="reference"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Ej. #REF1234"
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+
+            {/* Botón agregar */}
+            <div className="col-span-full">
+              <button
+                type="button"
+                onClick={handleAddPayment}
+                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Agregar pago
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Lista de pagos agregados */}
+        {selectedPayment.length > 0 && (
+          <div className="mt-6">
+            <h3 className="font-semibold mb-2">Pagos agregados:</h3>
+
+            {/* Encabezados */}
+            <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
+              <span>Método</span>
+              <span>Monto</span>
+              <span>Referencia</span>
+              <span>Acción</span>
+            </div>
+
+            {/* Filas */}
+            <div className="space-y-2">
+              {selectedPayment.map((p, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-4 gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
+                >
+                  <span>{p.Description}</span>
+                  <span>${p.Monto.toFixed(2)}</span>
+                  <span>{p.ReferenceNumber || "—"}</span>
+                  <button
+                    onClick={() => handleDeletePayment(i)}
+                    className="text-red-600 hover:underline"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+        <div className="flex mt-10 gap-4 justify-end">
           <button className={styles.buttonfacturar}>
             Facturar
           </button>
@@ -151,6 +555,9 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
           </button>
           <button className={styles.buttonAgregarCliente}>
             Enviar por correo
+          </button>
+          <button onClick={handleSaveSale} className={styles.buttonAgregarCliente}>
+            Completar
           </button>
         </div>
         </>
@@ -224,11 +631,10 @@ import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers"
 
         {modalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <ModalCustomers onClose={() => setModalOpen(false)} />
+            <ModalCustomers onClose={() => setModalOpen(false)} onSave={handleSaveCustomer} />
           </div>
         )}
       </div>
     );
   };
 
-  export default Cajas;

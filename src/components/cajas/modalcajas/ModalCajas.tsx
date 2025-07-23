@@ -1,4 +1,7 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { toast } from 'react-toastify';
+import { postBatch } from '../../../api/Post/BatchApi/BatchApi';
 
 interface ModalCajasProps { 
   onClose: () => void;
@@ -6,9 +9,51 @@ interface ModalCajasProps {
 
 const ModalCajas = ({ onClose }: ModalCajasProps) => {
   const [formData, setFormData] = useState({
-    operador: '',
-    lote: '',
-    fecha: '',
+    operador: getIdUsuario() || '',
+    lote: createBatch(),
+    fecha: getTodayDate() || '',
+  });
+
+  function getTodayDate() {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  function createBatch() {
+    const now = new Date();
+    const datePart = now.toISOString().split('T')[0].replace(/-/g, '');
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    const idusuario = localStorage.getItem('idusuario')
+    return `${datePart}-${idusuario}-${randomPart}`;
+  }
+
+  function getIdUsuario() {
+    const idusuario = localStorage.getItem('idusuario')
+    return idusuario;
+  }
+
+    const queryClient = useQueryClient();
+    
+    const { mutate } = useMutation({
+    mutationFn: postBatch,
+    onError: (error) => {
+        toast.error(`${error.message}`, {
+        position: "top-right",
+        });
+    },
+    onSuccess: () => {
+        setFormData({
+          operador: '',
+          lote: '',
+          fecha: '',
+        });
+        onClose();
+        toast.success("Producto actualizado con éxito", {
+        position: "top-right",
+        progressClassName: "custom-progress",
+        });
+        queryClient.invalidateQueries({ queryKey: ['batchs'] });
+    },
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,8 +63,8 @@ const ModalCajas = ({ onClose }: ModalCajasProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Datos del lote:', formData);
-    // Aquí podrías enviar los datos a una API o hacer lo necesario
-    onClose(); // Cierra el modal después de guardar
+    mutate(formData);
+    onClose();
   };
 
   return (

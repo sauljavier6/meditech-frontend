@@ -281,14 +281,13 @@ const toggleSubmenu = (menu: SubmenuKey) => {
         </div>
       </aside>
       
-      <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 sm:ml-64 p-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 sm:ml-64 p-6">
         <div className="mt-16">
           <div className="rounded-xl bg-white dark:bg-gray-800 shadow-md p-6 border border-gray-200 dark:border-gray-700">
             <Outlet />
           </div>
         </div>
       </div> 
-
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '../components/layout/poslayout/AdminLayout';
 
-import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/Dashboard';
 import ProductsPage from '../pages/productpage/ProductsPage';
 
@@ -19,6 +18,7 @@ import EcommerceLayout from '../components/layout/ecommercelayout/EcommerceLayou
 import EProductsPage from '../pages/ecommercepages/productpage/ProductPage';
 import CartPage from '../pages/ecommercepages/cartpage/CartPage';
 import ProductDetails from '../pages/ecommercepages/productdetails/ProductDetails';
+import AuthPage from '../pages/authpage/AuthPage';
 
 const AppRoutes = () => {
 
@@ -28,9 +28,9 @@ const AppRoutes = () => {
       <Route path="/" element={<EcommerceLayout />}>
         <Route index element={<HomePage />} />
         <Route path="productos" element={<EProductsPage />} />
-        <Route path="login" element={<LoginPage />} />
+        <Route path="login" element={<AuthPage />} />
         <Route path="carrito" element={<CartPage />} /> 
-        <Route path="detalles/:id" element={<ProductDetails />} /> 
+        <Route path="detalles/:id" element={<ProductDetails />} />
       </Route>
 
 

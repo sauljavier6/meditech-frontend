@@ -1,142 +1,26 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../productcard/ProductCard";
+import { getProducts } from "../../../api/productsApi/ProductsApi";
 
-interface categoria {
-  ID_Categoria: number;
-  Descripcion: string;
-}
-
-interface stock {
-  ID_Stock: number;
-  Descripcion: string;
-  Cantidad: number;
-  PrecioVenta: number;
-  PrecioCompra: number;
-}
-
-interface Product {
+interface ProductProps {
   ID_Product: number;
-  Descripcion: string;
-  Categoria: categoria;
-  Codigo: string;
-  Stock: stock;
+  Description: string;
+  Code: string;
   Imagen: string;
+  ID_Category: number; // sólo el número
+  Category?: {
+    ID_Category: number;
+    Description: string;
+  };
+  ID_Stock: number; // sólo el número
+  Stock?: {
+    ID_Stock: number;
+    Description: string;
+    Amount: number;
+    Saleprice: number; 
+    Purchaseprice: number;
+  };
 }
-
-const mockProducts: Product[] = [
-  {
-    ID_Product: 1,
-    Descripcion: "Laptop Lenovo",
-    Categoria: { ID_Categoria: 1, Descripcion: "Tecnología" },
-    Codigo: "LEN-123",
-    Stock: {
-      ID_Stock: 1,
-      Descripcion: "Stock disponible",
-      Cantidad: 10,
-      PrecioVenta: 1200,
-      PrecioCompra: 1000,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 2,
-    Descripcion: "Audífonos Sony",
-    Categoria: { ID_Categoria: 2, Descripcion: "Audio" },
-    Codigo: "SON-456",
-    Stock: {
-      ID_Stock: 2,
-      Descripcion: "Stock disponible",
-      Cantidad: 25,
-      PrecioVenta: 150,
-      PrecioCompra: 100,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 3,
-    Descripcion: "Teclado Mecánico",
-    Categoria: { ID_Categoria: 3, Descripcion: "Periféricos" },
-    Codigo: "TEC-789",
-    Stock: {
-      ID_Stock: 3,
-      Descripcion: "Stock limitado",
-      Cantidad: 5,
-      PrecioVenta: 80,
-      PrecioCompra: 60,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 4,
-    Descripcion: "Monitor Samsung",
-    Categoria: { ID_Categoria: 4, Descripcion: "Pantallas" },
-    Codigo: "SAM-101",
-    Stock: {
-      ID_Stock: 4,
-      Descripcion: "Pocas unidades",
-      Cantidad: 8,
-      PrecioVenta: 300,
-      PrecioCompra: 250,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 5,
-    Descripcion: "Laptop Lenovo",
-    Categoria: { ID_Categoria: 1, Descripcion: "Tecnología" },
-    Codigo: "LEN-123",
-    Stock: {
-      ID_Stock: 1,
-      Descripcion: "Stock disponible",
-      Cantidad: 10,
-      PrecioVenta: 1200,
-      PrecioCompra: 1000,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 6,
-    Descripcion: "Audífonos Sony",
-    Categoria: { ID_Categoria: 2, Descripcion: "Audio" },
-    Codigo: "SON-456",
-    Stock: {
-      ID_Stock: 2,
-      Descripcion: "Stock disponible",
-      Cantidad: 25,
-      PrecioVenta: 150,
-      PrecioCompra: 100,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 7,
-    Descripcion: "Teclado Mecánico",
-    Categoria: { ID_Categoria: 3, Descripcion: "Periféricos" },
-    Codigo: "TEC-789",
-    Stock: {
-      ID_Stock: 3,
-      Descripcion: "Stock limitado",
-      Cantidad: 5,
-      PrecioVenta: 80,
-      PrecioCompra: 60,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-  {
-    ID_Product: 8,
-    Descripcion: "Monitor Samsung",
-    Categoria: { ID_Categoria: 4, Descripcion: "Pantallas" },
-    Codigo: "SAM-101",
-    Stock: {
-      ID_Stock: 4,
-      Descripcion: "Pocas unidades",
-      Cantidad: 8,
-      PrecioVenta: 300,
-      PrecioCompra: 250,
-    },
-    Imagen: "/public/carrusel/medicare.jpg",
-  },
-];
 
 
 const marcas = [
@@ -175,7 +59,7 @@ const marcas = [
 
 function CatalogoBanner() {
   const [isClient, setIsClient] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -183,20 +67,18 @@ function CatalogoBanner() {
   }, []);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/banner/bestsellers', { cache: 'no-store' });
-        const data = await res.json();
-        setProducts(data.bestSellingProducts);
-      } catch (error) {
-        console.error("Error al obtener productos:", error);
-        setProducts(mockProducts);
-      } finally {
+        const { data } = await getProducts();
+        console.log('data:', data)
+        setProducts(data);
         setIsLoading(false);
+      } catch (error) {
+        console.error(error);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   if (!isClient || isLoading) {

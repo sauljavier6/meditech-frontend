@@ -1,17 +1,33 @@
-import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getBatch } from "../../../api/Post/BatchApi/BatchApi";
 
 interface ModalCajasProps { 
-  openCaja: (id:number) => void;
+  openCaja: (Lote:string) => void;
 }
 
-const CajasList = ({ openCaja }: ModalCajasProps) => {
-  const products = [
-    { id: 1, name: "Producto A", categoria: "a", codigo: "2121212323", price: 100 },
-    { id: 2, name: "Producto B", categoria: "b", codigo: "2121212323", price: 200 },
-  ];
+export interface User {
+  ID_User: number;
+  Name: string;
+}
 
-  const handleRowClick = (id:number) => {
-    openCaja(id);
+export interface Batch {
+  ID_Batch: number;
+  Lote: string;
+  Date: Date;
+  User: User;
+  State: boolean;
+}
+
+
+const CajasList = ({ openCaja }: ModalCajasProps) => {
+
+  const { data: batchsData } = useQuery({
+    queryKey: ['batchs'],
+    queryFn: getBatch,
+  });
+
+  const handleRowClick = (Lote:string) => {
+    openCaja(Lote);
   };
 
   return (
@@ -20,22 +36,30 @@ const CajasList = ({ openCaja }: ModalCajasProps) => {
         <thead className="bg-gray-100 text-gray-700 uppercase">
           <tr>
             <th className="px-5 py-2"><input type="checkbox" /></th>
+            <th className="px-5 py-2">ID</th>
             <th className="px-5 py-2">Lote</th>
-            <th className="px-5 py-2">Fecha</th>
             <th className="px-10 py-2">Creado por</th>
-            <th className="px-10 py-2">Saldo Total</th>
+            <th className="px-5 py-2">Fecha</th>
             <th className="px-5 py-2">Estado</th>
           </tr>
         </thead>
         <tbody>
-          {products.map((prod) => (
-            <tr key={prod.id} className="border-t" onClick={() => handleRowClick(prod.id)}>
+          {batchsData?.map((batchsData:Batch) => (
+            <tr key={batchsData.ID_Batch} className="border-t" onClick={() => handleRowClick(batchsData.Lote)}>
               <td className="px-5 py-2"><input type="checkbox" onClick={(e) => e.stopPropagation()} /></td>
-              <td className="px-5 py-2">{prod.id}</td>
-              <td className="px-5 py-2">{prod.name}</td>
-              <td className="px-10 py-2">{prod.categoria}</td>
-              <td className="px-10 py-2">{prod.codigo}</td>
-              <td className="px-5 py-2">${prod.price}</td>
+              <td className="px-5 py-2">{batchsData.ID_Batch}</td>
+              <td className="px-5 py-2">{batchsData.Lote}</td>
+              <td className="px-10 py-2">{batchsData.User.Name}</td>
+              <td className="px-5 py-2">
+                {batchsData.Date
+                  ? new Date(batchsData.Date).toLocaleDateString("es-MX", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : ""}
+              </td>
+              <td className="px-5 py-2">{batchsData.State? "Activo": "Innactivo" }</td>
             </tr>
           ))}
         </tbody>

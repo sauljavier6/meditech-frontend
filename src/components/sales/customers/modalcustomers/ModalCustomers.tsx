@@ -1,11 +1,22 @@
 import { useState } from "react";
 import styles from "./ModalCustomers.module.scss";
 
-interface ModalCustomersProps {
-  onClose: () => void;
+interface CustomerFormData {
+  nombre: string;
+  telefono: string;
+  correo: string;
+  razonSocial?: string;
+  codigoPostal?: string;
+  rfc?: string;
+  regimenFiscal?: string;
 }
 
-const ModalCustomers = ({ onClose }: ModalCustomersProps) => {
+interface ModalCustomersProps {
+  onClose: () => void;
+  onSave: (data: CustomerFormData) => void;
+}
+
+const ModalCustomers = ({ onClose, onSave }: ModalCustomersProps) => {
   const [activeTab, setActiveTab] = useState<"personal" | "facturacion">("personal");
 
   return (
@@ -46,7 +57,23 @@ const ModalCustomers = ({ onClose }: ModalCustomersProps) => {
         </div>
 
         {/* Formulario */}
-        <form>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+
+          const formData: CustomerFormData = {
+            nombre: (document.getElementById("nombreCliente") as HTMLInputElement)?.value || '',
+            telefono: (document.getElementById("telefonoCliente") as HTMLInputElement)?.value || '',
+            correo: (document.getElementById("correoCliente") as HTMLInputElement)?.value || '',
+            razonSocial: (document.getElementById("razonsocialCliente") as HTMLInputElement)?.value || '',
+            codigoPostal: (document.getElementById("codigopostalCliente") as HTMLInputElement)?.value || '',
+            rfc: (document.getElementById("rfcCliente") as HTMLInputElement)?.value || '',
+            regimenFiscal: (document.querySelector("select") as HTMLSelectElement)?.value || '',
+          };
+
+          onSave(formData); 
+          onClose();
+        }}>
+
           {activeTab === "personal" && (
             <div className="grid grid-cols-1 gap-4">
               <div>
