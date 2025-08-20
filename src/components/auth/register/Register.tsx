@@ -13,6 +13,7 @@ export default function Register({ onBack }: LoginProps) {
     email: '',
     imagen: null as File | null,
     password: '',
+    phone: ''
   });
 
 
@@ -38,6 +39,7 @@ export default function Register({ onBack }: LoginProps) {
         email: '',
         imagen: null,
         password: '',
+        phone: ''
     });
 
     if (fileInputRef.current) {
@@ -88,13 +90,13 @@ export default function Register({ onBack }: LoginProps) {
             </div>
 
             <div className="mb-6">
-            <label className="block text-sm font-medium">Contraseña</label>
+            <label className="block text-sm font-medium">Telefono</label>
             <input
-                type="password"
-                id='password'
-                name='password'
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                type="tel"
+                id='phone'
+                name='phone'
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full mt-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
                 required
             />
@@ -120,6 +122,19 @@ export default function Register({ onBack }: LoginProps) {
             }
             className="w-full mt-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
             required
+            />
+            </div>
+
+            <div className="mb-6">
+            <label className="block text-sm font-medium">Contraseña</label>
+            <input
+                type="password"
+                id='password'
+                name='password'
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                required
             />
             </div>
 

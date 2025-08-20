@@ -43,20 +43,6 @@ const CajasPage = () => {
           >
             Crear Lote
           </button>
-
-          <button
-            onClick={handleCreateCajas}
-            className={styles.buttonEditarProducto}
-          >
-            Editar
-          </button>
-
-          <button
-            onClick={handleCreateCajas}
-            className={styles.buttonEliminarProducto}
-          >
-            Eliminar
-          </button>
         </div>
       </div>
 
@@ -73,7 +59,6 @@ const CajasPage = () => {
     )}
     {openCajas && (
     <div className="p-4 bg-gray-50 rounded-lg shadow-sm">
-      {/* Encabezado con ícono de regreso */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={() => setOpenCajas(false)} className="flex items-center gap-2 hover:text-blue-600">
           <img

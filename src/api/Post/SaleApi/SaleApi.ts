@@ -27,11 +27,33 @@ interface SaleData {
 }
 
 
+interface PaymentSaleData {
+  ID_Sale: number;
+  Payment: PaymentSale[];
+}
+
+export const postPaymentSale = async (saleData:PaymentSaleData) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/sale/payments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(saleData),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Error al crear pago');
+  }
+
+  return await res.json();
+};
+
 export const searchProducts = async (query: string) => {
-  console.log('query',query)
   const res = await fetch(`${import.meta.env.VITE_API_URL}/sale/search?q=${query}`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`
     }
   });
 
@@ -40,12 +62,11 @@ export const searchProducts = async (query: string) => {
 };
 
 export const postSale = async (saleData:SaleData) => {
-  console.log('entro a la api del front', saleData)
   const res = await fetch(`${import.meta.env.VITE_API_URL}/sale`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(saleData),
   });
@@ -59,22 +80,26 @@ export const postSale = async (saleData:SaleData) => {
 };
 
 interface CustomerFormData {
-  nombre: string;
-  telefono: string;
-  correo: string;
-  razonSocial?: string;
-  codigoPostal?: string;
-  rfc?: string;
-  regimenFiscal?: string;
+  ID_User?: number | undefined;
+  Name: string;
+  Phone: string;
+  Email: string;
+  RazonSocial?: string;
+  CodigoPostal?: string;
+  Rfc?: string;
+  RegimenFiscal?: string;
+}
+
+interface CustomerSaleData extends CustomerFormData {
+  ID_Sale: number;
 }
 
 export const postCustomerSale = async (customersSaleData:CustomerFormData) => {
-  console.log('entro a la api del front')
   const res = await fetch(`${import.meta.env.VITE_API_URL}/sale/customer`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(customersSaleData),
   });
@@ -85,4 +110,75 @@ export const postCustomerSale = async (customersSaleData:CustomerFormData) => {
   }
 
   return await res.json();
+};
+
+export const getSale = async ({ page = 1, limit = 10 }) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/sale?page=${page}&limit=${limit}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Error al obtener venta');
+  }
+
+  return await res.json();
+};
+
+export const putCustomerSale = async (updatedData: CustomerSaleData) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/sale/customer`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Error al actualizar cliente');
+  }
+
+  return await res.json();
+};
+
+export const postCustomerWithSale = async (customersSaleData:CustomerSaleData) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/sale/customerwithsale`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(customersSaleData),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Error al crear cliente');
+  }
+
+  return await res.json();
+};
+
+export const getSaleById = async (ID_Sale: number) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/sale/sale/${ID_Sale}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      'Authorization': `Bearer ${token}`
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Error al obtener venta");
+  }
+
+  const result = await res.json();
+  return result.data;
 };

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 const AdminLayout = () => {
 type SubmenuKey = 'productos' | 'ventas' | 'cajas' | 'compras';
@@ -18,6 +20,12 @@ const toggleSubmenu = (menu: SubmenuKey) => {
   }));
 };
 
+const navigate = useNavigate();
+
+const handleSignOut = () => {
+  localStorage.removeItem("token");
+  navigate("/login");
+};
 
   return (
     <div>     
@@ -56,7 +64,7 @@ const toggleSubmenu = (menu: SubmenuKey) => {
                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Settings</a>
                       </li>
                       <li>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Sign out</a>
+                        <a onClick={handleSignOut} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Sign out</a>
                       </li>
                     </ul>
                   </div>
@@ -108,14 +116,6 @@ const toggleSubmenu = (menu: SubmenuKey) => {
                         className="block p-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 rounded-lg"
                       >
                         Productos
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="/pos/categorias"
-                        className="block p-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 rounded-lg"
-                      >
-                        Traspasos
                       </a>
                     </li>
                   </ul>

@@ -1,25 +1,37 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import ProductCard from "../productcard/ProductCard";
-import { getProducts } from "../../../api/productsApi/ProductsApi";
+import { getProductsCatalogoBanner } from "../../../api/Ecommerce/productsApi/ProductsApi";
+import { useQuery } from "@tanstack/react-query";
+
+interface Category {
+  ID_Category: number;
+  Description: string;
+};
+
+interface Stock {
+  ID_Stock: number;
+  Amount: number;
+  Description: string;
+  Saleprice: number;
+  Purchaseprice: number;
+} 
+
+interface Imagenes {
+  ID_Image: number;
+  ImagenUno: string;
+  ImagenDos: string;
+  ImagenTres: string;
+  ImagenCuatro: string;
+  ImagenCinco: string;
+} 
 
 interface ProductProps {
   ID_Product: number;
   Description: string;
   Code: string;
-  Imagen: string;
-  ID_Category: number; // sólo el número
-  Category?: {
-    ID_Category: number;
-    Description: string;
-  };
-  ID_Stock: number; // sólo el número
-  Stock?: {
-    ID_Stock: number;
-    Description: string;
-    Amount: number;
-    Saleprice: number; 
-    Purchaseprice: number;
-  };
+  Category: Category;
+  Stock: Stock[];
+  ImagenProduct: Imagenes[];
 }
 
 
@@ -58,30 +70,19 @@ const marcas = [
 
 
 function CatalogoBanner() {
-  const [isClient, setIsClient] = useState(false);
-  const [products, setProducts] = useState<ProductProps[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [page] = useState(1);
+  const limit = 4;
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data } = await getProducts();
-        console.log('data:', data)
-        setProducts(data);
-        setIsLoading(false);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+  const { data, isLoading } = useQuery({
+    queryKey: ['productsbanner', page, limit],
+    queryFn: () => getProductsCatalogoBanner({ page, limit }),
+    placeholderData: (prev) => prev,
+  });
 
-    fetchData();
-  }, []);
+  console.log('data', data);
 
-  if (!isClient || isLoading) {
+  if (isLoading) {
     return <h2 className="text-2xl text-center p-10">Cargando las mejores ofertas...</h2>;
   }
   
@@ -108,7 +109,7 @@ function CatalogoBanner() {
 
         <div className="w-full p-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {data?.data?.map((product: ProductProps) => (
                 <ProductCard key={product.ID_Product} product={product} />
             ))}
             </div>

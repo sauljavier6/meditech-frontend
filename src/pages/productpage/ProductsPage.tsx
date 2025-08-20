@@ -61,8 +61,6 @@ const ProductsPage = () => {
     setResetChecks(true);
   };
 
-  console.log('selectedIds', selectedIds)
-
   return (
     <div className="p-4 bg-gray-50 rounded-lg">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">

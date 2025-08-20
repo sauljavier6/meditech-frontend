@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./Cajas.module.scss";
 import ModalCustomers from "../../sales/customers/modalcustomers/ModalCustomers";
 import { postCustomerSale, postSale, searchProducts } from "../../../api/Post/SaleApi/SaleApi";
@@ -7,6 +7,8 @@ import { useMutation, useQueryClient  } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { getStates } from "../../../api/Post/StateApi/StateApi";
 import { getPayments } from "../../../api/Post/PaymentApi/PaymentApi";
+import { sendTicket } from "../../../api/Post/TicketApi/TicketApi";
+import { createRetiro } from "../../../api/Post/RetiroApi/RetiroApi";
 
 interface SaleProduct {
   id: number;
@@ -45,17 +47,14 @@ interface SaleData {
 }
 
 interface CustomerFormData {
-  nombre: string;
-  telefono: string;
-  correo: string;
+  ID_User?: number;
+  Name: string;
+  Phone: string;
+  Email: string;
   razonSocial?: string;
   codigoPostal?: string;
   rfc?: string;
   regimenFiscal?: string;
-}
-
-export interface CustomerResponseData extends CustomerFormData {
-  ID_User: number;
 }
 
 interface CajasProps {
@@ -66,9 +65,10 @@ interface CajasProps {
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState(search);
     const [products, setProducts] = useState<SaleProduct[]>([]);
-    const [customerData, setCustomerData] = useState<CustomerResponseData | null>(null);
+    const [customerData, setCustomerData] = useState<CustomerFormData | null>(null);
     const [selectedState, setSelectedState] = useState(2);
     const [selectedPayment, setSelectedPayment] = useState<PaymentSale[]>([]);
+    const [idSale, setIdSale] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState("");
     const [amount, setAmount] = useState("");
     const [reference, setReference] = useState("");
@@ -115,7 +115,9 @@ interface CajasProps {
           position: "top-right",
           });
       },
-      onSuccess: () => {
+      onSuccess: (data) => {
+          setIdSale(data.data.ID_Sale)
+          setCustomerData(null);
           setProducts([]);
           setSelectedPayment([])
           setPaymentMethod("");
@@ -147,20 +149,22 @@ interface CajasProps {
       },
     });
 
-    const handleRetiroSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-
-      const formData = new FormData(e.currentTarget);
-      const data = {
-        monto: formData.get("monto"),
-        descripcion: formData.get("descripcion"),
-        tipoPago: formData.get("tipoPago"),
-        // El lote puedes obtenerlo de la sesión o donde lo tengas
-        lote: "Lote #123", 
-      };
-
-      console.log("Datos del formulario:", data);
-    };
+    const { mutate: sendTiket } = useMutation({
+      mutationFn: sendTicket,
+      onError: (error) => {
+          toast.error(`${error.message}`, {
+          position: "top-right",
+          });
+      },
+      onSuccess: () => {
+          setIdSale(null);
+          toast.success("Ticket enviado con éxito", {
+          position: "top-right",
+          progressClassName: "custom-progress",
+          });
+          queryClient.invalidateQueries({ queryKey: ['sendticket'] });
+      },
+    });
 
     const handleSaveSale = async () => {
       if (products.length === 0) {
@@ -199,8 +203,13 @@ interface CajasProps {
     };
 
     const handleSaveCustomer = (data: CustomerFormData) => {
-      console.log("Cliente guardado:", data);
-      customerCreateMutate(data);
+      if (data.ID_User != null) {
+        console.log("guardando cliente", data);
+        setCustomerData(data);
+      } else {
+        console.log("Creando nuevo cliente", data);
+        customerCreateMutate(data);
+      }
     };
 
     const handleAddPayment = () => {
@@ -230,6 +239,65 @@ interface CajasProps {
       setSelectedPayment((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const handleImpresTicket = async () => {
+      try {
+        window.open(`${import.meta.env.VITE_API_URL}/ticket/${idSale}`, "_blank");
+        setIdSale(null);
+      } catch (error) {
+        console.error("Error al imprimir el ticket:", error);
+      }
+    };
+
+
+    const handleSendTicket = () => {
+      console.log("Imprimir ticket", idSale);
+      if (idSale !== null) {
+        sendTiket(idSale);
+      }
+    };
+
+
+// Función para manejar el retiro de dinero
+    const [idRetiro, setIdRetiro] = useState<number | null>(null);
+    const [dataRetiro, setdataRetiro] = useState({
+      Amount: "",
+      Description: "",
+      Payment: "",
+      Batch: Lote,
+      ID_Operador: idusuario,
+    });
+
+    const handleSaveRetiro = () => {
+      console.log("Datos del formulario:", dataRetiro);
+      createRetiromutate(dataRetiro)
+    };
+
+
+    const { mutate: createRetiromutate } = useMutation({
+      mutationFn: createRetiro,
+      onError: (error) => {
+          toast.error(`${error.message}`, {
+          position: "top-right",
+          });
+      },
+      onSuccess: (data) => {
+              setIdRetiro(data.data.ID_Sale)
+              setdataRetiro({
+                Amount: "",
+                Description: "",
+                Payment: "",
+                Batch: Lote,
+                ID_Operador: idusuario,
+              });
+          toast.success(data.message , {
+          position: "top-right",
+          progressClassName: "custom-progress",
+          });
+          queryClient.invalidateQueries({ queryKey: ['sale'] });
+      },
+    });
+
+    const isFormValid = Number(dataRetiro.Amount) > 0 && dataRetiro.Description.trim() !== "" && dataRetiro.Payment !== "";
 
     return (
       <div className="p-6 bg-white rounded-xl shadow-md max-w-3xl mx-auto">
@@ -260,7 +328,6 @@ interface CajasProps {
           </button>
         </div>
 
-
         {activeTab === "caja" && (  
         <>
         <div className="mb-4 relative">
@@ -285,7 +352,6 @@ interface CajasProps {
             </button>
           </div>
 
-          {/* Lista de sugerencias */}
           {data?.map((product) => (
             <li
               key={product.ID_Product}
@@ -332,14 +398,12 @@ interface CajasProps {
             </li>
           ))}
 
-          {/* Resultado vacío */}
           {search.length > 0 && !isLoading && data?.length === 0 && (
             <div className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded shadow-md z-10 px-4 py-2 text-gray-500">
               No se encontraron productos.
             </div>
           )}
         </div>
-
 
         <div className="border rounded p-4 mb-4">
           <h3 className="font-semibold mb-2">Productos en venta</h3>
@@ -455,7 +519,6 @@ interface CajasProps {
             </select>
           </div>
 
-
           <div className="text-sm w-full md:w-auto">
             <p>Subtotal: ${subtotal.toFixed(2)}</p>
             <p>IVA (16%): ${iva.toFixed(2)}</p>
@@ -463,7 +526,6 @@ interface CajasProps {
           </div>
         </div>
 
-        {/* Formulario de monto y referencia */}
         {paymentMethod && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -497,7 +559,6 @@ interface CajasProps {
               />
             </div>
 
-            {/* Botón agregar */}
             <div className="col-span-full">
               <button
                 type="button"
@@ -510,12 +571,10 @@ interface CajasProps {
           </div>
         )}
 
-        {/* Lista de pagos agregados */}
         {selectedPayment.length > 0 && (
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Pagos agregados:</h3>
 
-            {/* Encabezados */}
             <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
               <span>Método</span>
               <span>Monto</span>
@@ -523,7 +582,6 @@ interface CajasProps {
               <span>Acción</span>
             </div>
 
-            {/* Filas */}
             <div className="space-y-2">
               {selectedPayment.map((p, i) => (
                 <div
@@ -547,16 +605,27 @@ interface CajasProps {
 
 
         <div className="flex mt-10 gap-4 justify-end">
-          <button className={styles.buttonfacturar}>
+          <button
+            className={`bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={!idSale}
+          >
             Facturar
           </button>
-          <button className={styles.buttonAgregarCliente}>
+          <button
+            onClick={handleImpresTicket}
+            className={`bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={!idSale}
+          >
             Imprimir ticket
           </button>
-          <button className={styles.buttonAgregarCliente}>
-            Enviar por correo
+          <button
+            onClick={handleSendTicket}
+            className={`bg-yellow-500 text-white font-semibold py-2 px-4 rounded hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={!idSale}
+          >
+            Enviar por correos
           </button>
-          <button onClick={handleSaveSale} className={styles.buttonAgregarCliente}>
+          <button onClick={handleSaveSale} className={styles.buttonAgregarCliente} disabled={selectedPayment.length === 0}>
             Completar
           </button>
         </div>
@@ -566,29 +635,33 @@ interface CajasProps {
         {activeTab === "retiro" && (
           <div className="border rounded p-4 mb-4 bg-white shadow">
             <h3 className="font-semibold text-lg mb-4">Retiro de dinero</h3>
-          <form onSubmit={handleRetiroSubmit}> 
+
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1" htmlFor="monto">
                 Monto a retirar
               </label>
               <input
                 type="number"
-                name="monto"
+                name="Amount"
+                value={dataRetiro.Amount}
+                onChange={(e) =>
+                  setdataRetiro({ ...dataRetiro, Amount: e.target.value })
+                }
                 placeholder="Ingrese el monto..."
                 className="w-full border rounded px-3 py-2 text-sm"
+                required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">
-                Lote
-              </label>
+              <label className="block text-sm font-medium mb-1">Lote</label>
               <input
                 type="text"
-                name="lote"
-                value={`Lote: #`} // reemplaza session.lote por tu variable de sesión
+                name="Batch"
+                value={`Lote: #${dataRetiro.Batch}`}
                 disabled
                 className="w-full border rounded px-3 py-2 text-sm bg-gray-100"
+                required
               />
             </div>
 
@@ -597,10 +670,15 @@ interface CajasProps {
                 Motivo del retiro
               </label>
               <textarea
-                name="descripcion"
+                name="Description"
+                value={dataRetiro.Description}
+                onChange={(e) =>
+                  setdataRetiro({ ...dataRetiro, Description: e.target.value })
+                }
                 placeholder="Motivo del retiro..."
                 rows={3}
                 className="w-full border rounded px-3 py-2 text-sm"
+                required
               ></textarea>
             </div>
 
@@ -609,25 +687,48 @@ interface CajasProps {
                 Tipo de retiro
               </label>
               <select
-                name="tipoPago"
+                id="Payment"
+                name="Payment"
                 className="w-full border rounded px-3 py-2 text-sm"
-                defaultValue=""
+                value={dataRetiro.Payment}
+                onChange={(e) =>
+                  setdataRetiro({ ...dataRetiro, Payment: e.target.value })
+                }
+                required
               >
-                <option value="" disabled>Selecciona una opción</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="cheque">Cheque</option>
+                <option value="" disabled>
+                  Selecciona un método de pago
+                </option>
+                {paymentsData?.data?.map((payment: any) => (
+                  <option key={payment.ID_Payment} value={payment.ID_Payment}>
+                    {payment.Description}
+                  </option>
+                ))}
               </select>
             </div>
 
-            <div className="flex justify-center">
-              <button className={styles.buttonAgregarCliente}>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleSaveRetiro}
+                className={`${styles.buttonAgregarCliente} ${
+                  !isFormValid ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={!isFormValid}
+              >
                 Confirmar retiro
               </button>
+              <button
+                className={`${styles.buttonfacturar} ${
+                  idRetiro === null ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={idRetiro === null}
+              >
+                Imprimir ticket
+              </button>
             </div>
-          </form>
           </div>
         )}
+
 
         {modalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

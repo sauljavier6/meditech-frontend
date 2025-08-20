@@ -2,11 +2,34 @@
 import { useState } from "react";
 import styles from "./ComprasPage.module.scss";
 import ComprasList from "../../components/compras/comprasygastos/compraslist/ComprasList";
-import ComprasForm from "../../components/compras/comprasygastos/compras/ComprasForm";
+import Compras from "../../components/compras/comprasygastos/compras/Compras";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+import { deleteCompras } from "../../api/Post/ComprasApi/ComprasApi";
 
 const ComprasPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [resetChecks, setResetChecks] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
+    mutationFn: deleteCompras,
+    onError: (error) => {
+        toast.error(`${error.message}`, {
+        position: "top-right",
+        });
+    },
+    onSuccess: () => {
+        toast.success("Compra eliminada con éxito", {
+        position: "top-right",
+        progressClassName: "custom-progress",
+        });
+        queryClient.invalidateQueries({ queryKey: ['compras'] });
+    },
+  });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -15,6 +38,12 @@ const ComprasPage = () => {
   const handleCreateCompra = () => {
     setFormOpen(true);
   };
+
+  const handleDeleteProduct = () => {
+    mutate(selectedIds);
+    setSelectedIds([])
+  };
+
 
   return (
     <div>
@@ -40,15 +69,13 @@ const ComprasPage = () => {
           </button>
 
           <button
-            onClick={handleCreateCompra}
-            className={styles.buttonEditarProducto}
-          >
-            Editar
-          </button>
-
-          <button
-            onClick={handleCreateCompra}
-            className={styles.buttonEliminarProducto}
+            onClick={handleDeleteProduct}
+            disabled={selectedIds?.length === 0}
+            className={`px-4 py-2 rounded font-semibold text-white transition-colors duration-200 
+              ${selectedIds?.length === 0 
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                : styles.buttonEliminarProducto}
+            `}
           >
             Eliminar
           </button>
@@ -56,7 +83,8 @@ const ComprasPage = () => {
       </div>
 
       
-      <ComprasList />
+      <ComprasList onDelete={(id) => setSelectedIds(id)} resetChecks={resetChecks}
+      onResetComplete={() => setResetChecks(false)}/>
     </div>
      )}
 
@@ -72,7 +100,7 @@ const ComprasPage = () => {
             <span className="text-sm">Regresar</span>
           </button>
         </div>
-        <ComprasForm/>
+        <Compras/>
       </div>
     )}
     </div>

@@ -7,12 +7,19 @@ import CajasQuotes from "../../components/sales/quotes/cajaquotes/CajaQuotes";
 const QuotesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [cajaOpen, setCajaOpen] = useState(false);
+  const [isIDSale, setIsIDSale] = useState<number[]>([]);
+  const [resetChecks, setResetChecks] = useState(false);
 
 const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const handleCreateQuote = () => {
+    setIsIDSale([])
+    setCajaOpen(true);
+  };
+
+  const handleUpdateQuote = () => {
     setCajaOpen(true);
   };
 
@@ -41,23 +48,23 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </button>
 
           <button
-            onClick={handleCreateQuote}
-            className={styles.buttonEditarProducto}
+            onClick={handleUpdateQuote}
+            disabled={isIDSale.length !== 1}
+            className={`px-4 py-2 rounded-md font-medium transition-colors 
+              ${isIDSale.length !== 1 
+                ? 'bg-gray-400 cursor-not-allowed text-gray-100' 
+                : styles.buttonEditarProducto}`}
           >
             Editar
           </button>
 
-          <button
-            onClick={handleCreateQuote}
-            className={styles.buttonEliminarProducto}
-          >
-            Eliminar
-          </button>
+
         </div>
       </div>
 
-      
-        <QuotesList/>
+       
+        <QuotesList onSelected={(id) => setIsIDSale(id)} resetChecks={resetChecks}
+      onResetComplete={() => setResetChecks(false)}/>
       
     </div>
     )}
@@ -74,7 +81,7 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             <span className="text-sm">Regresar</span>
           </button>
         </div>
-        <CajasQuotes />
+        <CajasQuotes ID_Sale={isIDSale[0]} />
       </div>
     )}
   </div>

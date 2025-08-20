@@ -1,10 +1,11 @@
-
+const token = localStorage.getItem('token');
 
 export const getCategory = async () => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/category`, {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     },
   });
 

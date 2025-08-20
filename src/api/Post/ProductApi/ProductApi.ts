@@ -7,6 +7,11 @@ interface StockInput {
   State?: boolean;
 }
 
+interface ProductImage {
+  file: File;
+  preview: string;
+}
+
 interface ProductInput {
   Description: string;
   ID_Category: number;
@@ -14,15 +19,17 @@ interface ProductInput {
   Imagen: string;
   State?: boolean;
   StockData: StockInput[];
+  Imagenes: ProductImage[]; 
 }
 
 const token = localStorage.getItem('token')
 
-export const getProducts = async (page = 1, limit = 10) => {
+export const getProducts = async ({ page = 1, limit = 10 }) => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product?page=${page}&limit=${limit}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     },
   });
 
@@ -32,13 +39,25 @@ export const getProducts = async (page = 1, limit = 10) => {
 
 
 export const postProduct = async (productData: ProductInput) => {
+  const formData = new FormData();
+
+  // datos normales
+  formData.append("Code", productData.Code);
+  formData.append("Description", productData.Description);
+  formData.append("ID_Category", productData.ID_Category.toString());
+  formData.append("StockData", JSON.stringify(productData.StockData));
+
+  // imágenes
+  productData.Imagenes.forEach((imgObj: ProductImage ) => {
+    formData.append("Imagenes", imgObj.file);
+  });
+
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify(productData),
+    body: formData,
   });
 
   if (!res.ok) {
@@ -55,7 +74,7 @@ export const deleteMultipleProducts = async (ids: number[]) => {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify({ ids }),
   });
@@ -72,7 +91,7 @@ export const deleteMultipleProducts = async (ids: number[]) => {
 export const getProductById = async (id: number) => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product/${id}`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     },
   });
 
@@ -88,7 +107,7 @@ export const updateProduct = async (productData: ProductInput) => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(productData),
   });
@@ -101,12 +120,10 @@ export const updateProduct = async (productData: ProductInput) => {
   return await res.json();
 };
 
-
-
 export const searchProducts = async (query: string) => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product/search?q=${query}`, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`
     }
   });
 

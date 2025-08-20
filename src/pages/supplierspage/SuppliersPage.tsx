@@ -3,17 +3,55 @@ import { useState } from "react";
 import styles from "./SuppliersPage.module.scss";
 import SuppliersList from "../../components/compras/suppliers/supplierslist/SuppliersList";
 import ModalSuppliers from "../../components/compras/suppliers/modalsuppliers/ModalSuppliers";
+import { toast } from "react-toastify";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteMultipleSuppliers } from "../../api/Post/suppliersApi/SuppliersApi";
 
 const SuppliersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [supplierToEdit, setSupplierToEdit] = useState<number | null>(null);
+  const [resetChecks, setResetChecks] = useState(false);
 
-const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
+    mutationFn: deleteMultipleSuppliers,
+    onError: (error) => {
+        toast.error(`${error.message}`, {
+        position: "top-right",
+        });
+    },
+    onSuccess: () => {
+        toast.success("Proveedor eliminado con éxito", {
+        position: "top-right",
+        progressClassName: "custom-progress",
+        });
+        queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    },
+  });
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
   const handleCreateProveedor = () => {
     setModalOpen(true);
+  };
+
+  const handleDeleteProduct = () => {
+    mutate(selectedIds);
+    setSelectedIds([])
+  };
+
+  const handleEdit = () => {
+    if (selectedIds.length === 1) {
+      setSupplierToEdit(selectedIds[0]);
+      setModalOpen(true);
+    } else if (selectedIds.length > 1) {
+      toast.warn('Solo puedes editar un producto a la vez');
+    }
   };
 
   return (
@@ -38,15 +76,25 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </button>
 
           <button
-            onClick={handleCreateProveedor}
-            className={styles.buttonEditarProducto}
+            onClick={handleEdit}
+            disabled={selectedIds.length !== 1}
+            className={`px-4 py-2 rounded font-semibold text-white transition-colors duration-200 
+              ${selectedIds.length !== 1
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                : styles.buttonEditarProducto}
+            `}
           >
             Editar
           </button>
 
           <button
-            onClick={handleCreateProveedor}
-            className={styles.buttonEliminarProducto}
+            onClick={handleDeleteProduct}
+            disabled={selectedIds?.length === 0}
+            className={`px-4 py-2 rounded font-semibold text-white transition-colors duration-200 
+              ${selectedIds?.length === 0 
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                : styles.buttonEliminarProducto}
+            `}
           >
             Eliminar
           </button>
@@ -54,11 +102,12 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       </div>
 
       {/* Pasamos el término de búsqueda al componente de la lista */}
-      <SuppliersList />
+      <SuppliersList onDelete={(id) => setSelectedIds(id)} resetChecks={resetChecks}
+      onResetComplete={() => setResetChecks(false)}/>
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <ModalSuppliers onClose={() => setModalOpen(false)} />
+          <ModalSuppliers onClose={() => setModalOpen(false)} onEdit={supplierToEdit} />
         </div>
       )}
     </div>

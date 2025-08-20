@@ -36,27 +36,15 @@ interface ProductsListProps {
 
 
 const ProductsList = ({onDelete, resetChecks, onResetComplete}: ProductsListProps ) => {
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    itemsPerPage: 5,
-  });
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['products', pagination.currentPage],
-    queryFn: () => getProducts(pagination.currentPage, pagination.itemsPerPage),
+  const { data } = useQuery({
+    queryKey: ['products', page, limit],
+    queryFn: () => getProducts({ page, limit }),
+    placeholderData: (prev) => prev,
   });
-
-  useEffect(() => {
-    if (data && data.pagination) {
-      setPagination(prev => ({
-        ...prev,
-        totalPages: data.pagination.totalPages,
-      }));
-    }
-  }, [data]);
   
   useEffect(() => {
     if (resetChecks) {
@@ -70,19 +58,6 @@ const ProductsList = ({onDelete, resetChecks, onResetComplete}: ProductsListProp
     onDelete(selectedIds);
   }, [selectedIds]);
 
-
-  const handleNext = () => {
-    if (pagination.currentPage < pagination.totalPages) {
-      setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }));
-    }
-  };
-
-  const handlePrev = () => {
-    if (pagination.currentPage > 1) {
-      setPagination(prev => ({ ...prev, currentPage: prev.currentPage - 1 }));
-    }
-  };
-
   const handleCheckboxChange = (id: number) => {
     setSelectedIds((prev) =>
       prev.includes(id)
@@ -95,14 +70,12 @@ const ProductsList = ({onDelete, resetChecks, onResetComplete}: ProductsListProp
     if (!data?.data) return;
 
     if (selectedIds.length === data.data.length) {
-      setSelectedIds([]); // deselecciona todo
+      setSelectedIds([]);
     } else {
       const allIds = data.data.map((prod: ProductProps) => prod.ID_Product);
-      setSelectedIds(allIds); // selecciona todo
+      setSelectedIds(allIds);
     }
   };
-
-
 
   return (
     <>
@@ -126,12 +99,8 @@ const ProductsList = ({onDelete, resetChecks, onResetComplete}: ProductsListProp
           </tr>
         </thead>
         <tbody>
-          {isLoading ? (
-            <tr>
-              <td colSpan={7} className="text-center py-4">Cargando productos...</td>
-            </tr>
-          ) : (
-            data?.data?.map((prod: ProductProps) => (
+
+            {data?.data?.map((prod: ProductProps) => (
               <tr key={prod.ID_Product} className="border-t">
                 <td className="px-2 py-2">
                   <input type="checkbox" checked={selectedIds.includes(prod.ID_Product)}
@@ -146,32 +115,54 @@ const ProductsList = ({onDelete, resetChecks, onResetComplete}: ProductsListProp
                 <td className="px-2 py-2">${prod.Stock?.[0]?.Purchaseprice ?? '—'}</td>
               </tr>
             ))
-          )}
+          }
         </tbody>
       </table>
     </div>
-
-    <div className="flex justify-end items-center gap-4 mt-6">
+    <div className="flex justify-end items-center mt-4 space-x-2">
       <button
-        onClick={handlePrev}
-        disabled={pagination.currentPage === 1}
-        className={`px-4 py-2 rounded-md text-white font-semibold transition-colors duration-200 
-          ${pagination.currentPage === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+        disabled={page === 1}
+        onClick={() => setPage((old) => Math.max(old - 1, 1))}
+        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 flex items-center justify-center"
       >
-        Anterior
+        <img src="/icons/flecha-negra.png" alt="Anterior" className="w-4 h-4" />
       </button>
 
-      <span className="text-sm font-medium">
-        Página {pagination.currentPage} de {pagination.totalPages}
-      </span>
+      {data && data.totalPages >= 1 && (
+        <>
+          {(() => {
+            const maxButtons = 5;
+            let start = Math.max(1, page - Math.floor(maxButtons / 2));
+            let end = start + maxButtons - 1;
+
+            if (end > data.totalPages) {
+              end = data.totalPages;
+              start = Math.max(1, end - maxButtons + 1);
+            }
+
+            return Array.from({ length: end - start + 1 }, (_, i) => start + i).map((num) => (
+              <button
+                key={num}
+                onClick={() => setPage(num)}
+                className={`px-3 py-1 rounded ${
+                  page === num
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                {num}
+              </button>
+            ));
+          })()}
+        </> 
+      )}
 
       <button
-        onClick={handleNext}
-        disabled={pagination.currentPage === pagination.totalPages}
-        className={`px-4 py-2 rounded-md text-white font-semibold transition-colors duration-200 
-          ${pagination.currentPage === pagination.totalPages ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+        disabled={page >= (data?.totalPages || 1)}
+        onClick={() => setPage((old) => old + 1)}
+        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 flex items-center justify-center"
       >
-        Siguiente
+        <img src="/icons/flecha-negra.png" alt="Siguiente" className="w-4 h-4 rotate-180" />
       </button>
     </div>
     </>

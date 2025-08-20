@@ -48,7 +48,7 @@ const ModalCajas = ({ onClose }: ModalCajasProps) => {
           fecha: '',
         });
         onClose();
-        toast.success("Producto actualizado con éxito", {
+        toast.success("Lote creado con éxito", {
         position: "top-right",
         progressClassName: "custom-progress",
         });

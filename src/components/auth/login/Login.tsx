@@ -31,7 +31,7 @@ export default function Login({ onRegister }: LoginProps) {
       navigate('/');
     }
     else if (userData?.ID_Rol === 1) {
-      navigate('/pos/');
+      navigate('/pos/dashboard');
     }
   }, [userData, navigate]);
 
