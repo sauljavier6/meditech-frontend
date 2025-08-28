@@ -1,137 +1,148 @@
-// src/context/CartContext.tsx
-import React, { createContext, useContext, useEffect, useState } from "react";
-
-// Tipos
-interface Categoria {
-  ID_Categoria: number;
-  Descripcion: string;
-}
-
-interface Stock {
-  ID_Stock: number;
-  Descripcion: string;
-  Cantidad: number;
-  PrecioVenta: number;
-  PrecioCompra: number;
-}
+import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from "react";
 
 interface CartItem {
-  ID_Product: string;
-  Descripcion: string;
-  Categoria: Categoria;
-  Codigo: string;
-  Stock: Stock;
-  Imagen: string;
+  ID_Product: number;
+  Description: string;
+  ID_Stock: number;
+  StockDescription: string;
+  Saleprice: number;
+  Quantity: number;
+  Imagen?: string;
+}
+
+interface CartState {
+  items: CartItem[];
+}
+
+type CartAction =
+  | { type: "ADD_ITEM"; payload: CartItem }
+  | { type: "REMOVE_ITEM"; payload: { ID_Product: number; ID_Stock: number } }
+  | { type: "CLEAR_CART" }
+  | { type: "INCREASE_QTY"; payload: { ID_Product: number; ID_Stock: number } }
+  | { type: "DECREASE_QTY"; payload: { ID_Product: number; ID_Stock: number } }
+  | { type: "SET_CART"; payload: CartItem[] };
+
+function cartReducer(state: CartState, action: CartAction): CartState {
+  switch (action.type) {
+    case "ADD_ITEM": {
+      const existing = state.items.find(
+        (item) =>
+          item.ID_Product === action.payload.ID_Product &&
+          item.ID_Stock === action.payload.ID_Stock
+      );
+
+      if (existing) {
+        return {
+          ...state,
+          items: state.items.map((item) =>
+            item.ID_Product === action.payload.ID_Product &&
+            item.ID_Stock === action.payload.ID_Stock
+              ? { ...item, Quantity: item.Quantity + action.payload.Quantity }
+              : item
+          ),
+        };
+      }
+      return { ...state, items: [...state.items, action.payload] };
+    }
+
+    case "REMOVE_ITEM":
+      return {
+        ...state,
+        items: state.items.filter(
+          (item) =>
+            !(item.ID_Product === action.payload.ID_Product &&
+              item.ID_Stock === action.payload.ID_Stock)
+        ),
+      };
+
+    case "CLEAR_CART":
+      return { ...state, items: [] };
+
+    case "INCREASE_QTY":
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.ID_Product === action.payload.ID_Product &&
+          item.ID_Stock === action.payload.ID_Stock
+            ? { ...item, Quantity: item.Quantity + 1 }
+            : item
+        ),
+      };
+
+    case "DECREASE_QTY":
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.ID_Product === action.payload.ID_Product &&
+          item.ID_Stock === action.payload.ID_Stock && item.Quantity > 1
+            ? { ...item, Quantity: item.Quantity - 1 }
+            : item
+        ),
+      };
+
+    case "SET_CART":
+      return { ...state, items: action.payload };
+
+    default:
+      return state;
+  }
 }
 
 interface CartContextProps {
-  cart: CartItem[];
-
-
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string) => void;
+  state: CartState;
+  addItem: (item: CartItem) => void;
+  removeItem: (ids: { ID_Product: number; ID_Stock: number }) => void;
   clearCart: () => void;
-  getProductQuantity: (id: string) => number;
-  deliveryAddress: string;
-  setDeliveryAddress: (address: string) => void;
+  increaseQty: (ids: { ID_Product: number; ID_Stock: number }) => void;
+  decreaseQty: (ids: { ID_Product: number; ID_Stock: number }) => void;
+  getTotal: () => number;
 }
 
-// Creamos el contexto
 const CartContext = createContext<CartContextProps | undefined>(undefined);
 
-// Proveedor
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [deliveryAddress, setDeliveryAddress] = useState<string>("");
+export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const [state, dispatch] = useReducer(
+    cartReducer,
+    undefined,
+    () => ({
+      items: (() => {
+        try {
+          return JSON.parse(localStorage.getItem("cart") || "[]");
+        } catch {
+          return [];
+        }
+      })(),
+    })
+  );
 
-  // Cargar desde localStorage
+  // Guardar carrito en localStorage cada vez que cambia
   useEffect(() => {
-    const storedCart = localStorage.getItem("cart");
-    const storedAddress = localStorage.getItem("deliveryAddress");
+    localStorage.setItem("cart", JSON.stringify(state.items));
+  }, [state.items]);
 
-    if (storedCart) setCart(JSON.parse(storedCart));
-    if (storedAddress) setDeliveryAddress(storedAddress);
-  }, []);
+  const addItem = (item: CartItem) => dispatch({ type: "ADD_ITEM", payload: item });
+  const removeItem = (ids: { ID_Product: number; ID_Stock: number }) =>
+    dispatch({ type: "REMOVE_ITEM", payload: ids });
+  const clearCart = () => dispatch({ type: "CLEAR_CART" });
+  const increaseQty = (ids: { ID_Product: number; ID_Stock: number }) =>
+    dispatch({ type: "INCREASE_QTY", payload: ids });
+  const decreaseQty = (ids: { ID_Product: number; ID_Stock: number }) =>
+    dispatch({ type: "DECREASE_QTY", payload: ids });
 
-  // Guardar en localStorage
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem("deliveryAddress", deliveryAddress);
-  }, [deliveryAddress]);
-
-
-  // Funciones
-  const addToCart = (product: CartItem) => {
-    setCart((prev) => {
-      return [...prev, { ...product, Cantidad: 1 }];
-    });
-  };
-
-
-
-
-
-  const removeFromCart = (ID_Product: string) => {
-    setCart((prev) =>
-      prev
-        .map((item) =>
-          item.ID_Product === ID_Product
-            ? item.Stock.Cantidad > 1
-              ? { ...item, Cantidad: item.Stock.Cantidad - 1 }
-              : null
-            : item
-        )
-        .filter((item): item is CartItem => item !== null)
-    );
-  };
-
-
-
-
-  const clearCart = () => {
-    setCart([]);
-    localStorage.removeItem("cart");
-  };
-
-
-
-
-  const getProductQuantity = (ID_Product: string) => {
-    const item = cart.find(
-      (item) => item.ID_Product === ID_Product
-    );
-    return item ? item.Stock.Cantidad : 0;
-  };
-
-
+  const getTotal = () =>
+    state.items.reduce((acc: number, item: { Saleprice: number; Quantity: number; }) => acc + item.Saleprice * item.Quantity, 0);
 
   return (
     <CartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        clearCart,
-        getProductQuantity,
-        deliveryAddress,
-        setDeliveryAddress,
-      }}
+      value={{ state, addItem, removeItem, clearCart, increaseQty, decreaseQty, getTotal }}
     >
       {children}
     </CartContext.Provider>
   );
 };
 
-
-
-// Hook para usar el contexto
-export const useCart = () => {
+export const useCart = (): CartContextProps => {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart debe usarse dentro de un CartProvider");
-  }
+  if (!context) throw new Error("useCart debe usarse dentro de un CartProvider");
   return context;
 };

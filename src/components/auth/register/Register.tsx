@@ -56,7 +56,7 @@ export default function Register({ onBack }: LoginProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="min-h-screen p-20 flex flex-col items-center justify-center bg-white">
+        <div className="min-h-190 flex flex-col items-center justify-center bg-white">
         <form
             onSubmit={handleSubmit}
             className="bg-white p-8 rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.2)] w-full max-w-sm"

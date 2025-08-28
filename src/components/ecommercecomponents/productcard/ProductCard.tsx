@@ -70,24 +70,41 @@ return (
           alt={product.Description}
           className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
         />
+
         {/* Botones para cambiar imagen */}
         {images.length > 1 && (
           <>
             <button
-              onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-              className="absolute top-1/2 left-2 -translate-y-1/2text-white p-1 rounded-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrev();
+              }}
+              className="absolute top-1/2 left-2 -translate-y-1/2 hover:bg-black/15 text-white p-1 rounded-full transition"
             >
-              <img src="/icons/flechaabajo.png" className="w-6 h-6 rotate-90" alt="izquierda" />
+              <img
+                src="/icons/flechaabajo.png"
+                className="w-6 h-6 rotate-90"
+                alt="izquierda"
+              />
             </button>
+
             <button
-              onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="absolute top-1/2 right-2 -translate-y-1/2 text-white p-1 rounded-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              className="absolute top-1/2 right-2 -translate-y-1/2 hover:bg-black/15 text-white p-1 rounded-full transition"
             >
-              <img src="/icons/flechaabajo.png" className="w-6 h-6 -rotate-90" alt="derecha" />
+              <img
+                src="/icons/flechaabajo.png"
+                className="w-6 h-6 -rotate-90"
+                alt="derecha"
+              />
             </button>
           </>
         )}
       </div>
+
 
       <h2 className="text-lg font-semibold text-gray-800 mb-2">{product.Description}</h2>
       <p className="text-sm text-gray-500">{product.Category?.Description ?? "Sin categoría"}</p>

@@ -54,7 +54,7 @@ const BestProducts = () => {
   }
 
   return (
-    <div className="w-full p-6">
+    <div className="w-full p-2">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">Las mejores ofertas</h2>
         <p className="text-gray-600 text-center">¿Buscas calidad al mejor precio? Descubre nuestras ofertas exclusivas y ahorra en grande</p>
         <p className="text-gray-600 text-center mb-6">con nuestra amplia gama de productos</p>
@@ -69,7 +69,7 @@ const BestProducts = () => {
             />
             <ProductCard product={product} />
           </div>
-        ))}
+        ))} 
         </div>
     </div>
 

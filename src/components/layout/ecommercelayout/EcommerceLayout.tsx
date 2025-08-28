@@ -1,97 +1,187 @@
 import { Outlet } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import styles from "./EcomerceLayout.module.scss";
+import { useEffect, useRef, useState } from "react";
+import { getProductsByDescription } from "../../../api/Ecommerce/productsApi/ProductsApi";
+import { Link } from "react-router-dom";
 
+interface ProductProps {
+  ID_Product: number;
+  Description: string;
+}
 
 const EcommerceLayout = () => {
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ProductProps[]>([]);
+  const [loading, setLoading] = useState(false);
+  
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleSignOut = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleClickOutside = (event: { target: any; }) => {
+      if (
+        containerRef.current &&
+        containerRef.current instanceof HTMLDivElement &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const searchProducts = async (term: string) => {
+    if (!term) {
+      setResults([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await getProductsByDescription(term);
+      setResults(data);
+    } catch (err) {
+      console.error(err);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Efecto para buscar mientras escribe el usuario (con debounce opcional)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchProducts(query);
+    }, 300); // espera 300ms después de que deje de escribir
+    return () => clearTimeout(timer);
+  }, [query]);
 
   return (
     <div>     
-      <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-        <div className="px-3 py-2 lg:px-5 lg:pl-3 bg-blue-800">
-          <div className="flex items-center justify-between px-4">
-            <ul className="flex gap-x-4" role="none">
-              <li>
-                <a href="#" className={styles.menuitem} role="menuitem">Nosotros</a>
-              </li>
-              <li>
-                <a href="#" className={styles.menuitem} role="menuitem">Facturación</a>
-              </li>
-            </ul>
-            <ul className="flex" role="none">
-              <li>
-                <a href="#" className={styles.menuitem} role="menuitem"><img src="/public/icons/llamar.png" alt="telefono" className="w-[25px] h-auto filter invert" /></a>
-              </li>
-              <li>
-                <a href="#" className={styles.menuitem} role="menuitem"><img src="/public/icons/facebook.png" alt="facebook" className="w-[25px] h-auto filter invert" /></a>
-              </li>
-              <li>
-                <a href="#" className={styles.menuitem} role="menuitem"><img src="/public/icons/instagram.png" alt="instagram" className="w-[25px] h-auto filter invert" /></a>
-              </li>
-              <li>
-                <a href="#" className={styles.menuitem} role="menuitem"><img src="/public/icons/whatsapp.png" alt="whatsapp" className="w-[25px] h-auto filter invert" /></a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="px-3 py-3 lg:px-5 lg:pl-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center justify-start rtl:justify-end">
-                <img src="/medicare.png" className="h-8 me-3 rounded" alt="FlowBite Logo" />
-                <span className="hidden sm:inline self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
-                  MEDICARE TJ
-                </span>
-            </div>
+    <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+      <div className="px-3 py-2 lg:px-5 lg:pl-3 bg-blue-800 flex justify-between items-center">
+        <ul className="flex" role="none">
+          <li>
+            <a href="#" className={styles.menuitem} role="menuitem">Nosotros</a>
+          </li>
+          <li>
+            <a href="#" className={styles.menuitem} role="menuitem">Facturación</a>
+          </li>
+        </ul>
 
-            <div className="flex items-center">
-              <ul className="flex gap-6 text-blue-800 text-lg font-medium">
-                <li className="hover:text-gray-500 transition-colors cursor-pointer">
-                  <a href="/" className={styles.linkreset}>Inicio</a>
-                </li>
-                <li className="hover:text-gray-500 transition-colors cursor-pointer">
-                  <a href="/productos" className={styles.linkreset}>Productos</a>
-                </li>
-                <li className="hover:text-gray-500 transition-colors cursor-pointer">Cotizaciones</li>
+        <ul className="flex gap-x-2" role="none">
+          <li>
+            <a href="#" className={styles.menuitem}>
+              <img src="/public/icons/llamar.png" alt="telefono" className="w-6 h-auto filter invert" />
+            </a>
+          </li>
+          <li>
+            <a href="#" className={styles.menuitem}>
+              <img src="/public/icons/facebook.png" alt="facebook" className="w-6 h-auto filter invert" />
+            </a>
+          </li>
+          <li>
+            <a href="#" className={styles.menuitem}>
+              <img src="/public/icons/instagram.png" alt="instagram" className="w-6 h-auto filter invert" />
+            </a>
+          </li>
+          <li>
+            <a href="#" className={styles.menuitem}>
+              <img src="/public/icons/whatsapp.png" alt="whatsapp" className="w-6 h-auto filter invert" />
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div className="px-3 py-3 lg:px-5 lg:pl-3 flex items-center justify-between">
+        <div className="flex items-center justify-between w-1/2">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer">
+            <img src="/medicare.png" className="h-8 w-auto rounded" alt="Logo" />
+            <span className="hidden sm:inline text-xl font-semibold text-gray-800 dark:text-white whitespace-nowrap">
+              MEDICARE TJ
+            </span>
+          </Link>
+          <ul className="hidden sm:flex gap-6 text-gray-800 dark:text-white font-medium text-lg">
+            <li className="hover:text-blue-600 transition-colors">
+              <a href="/" className={styles.linkreset}>Inicio</a>
+            </li>
+            <li className="hover:text-blue-600 transition-colors">
+              <a href="/productos" className={styles.linkreset}>Productos</a>
+            </li>
+            <li className="hover:text-blue-600 transition-colors">
+              <a href="#" className={styles.linkreset}>Cotizaciones</a>
+            </li>
+          </ul>
+        </div>
+
+
+        <button
+          className="sm:hidden text-blue-800 focus:outline-none"
+          onClick={() => setMenuOpen(!isMenuOpen)}
+        >
+          <img src="/icons/menu.png" alt="menu" className="w-6 h-6" />
+        </button>
+
+
+        <div className="hidden sm:flex items-center gap-6 mr-4">
+          <div ref={containerRef} className="relative flex items-center">
+            <div
+              className={`absolute right-full mr-2 w-64 transition-all duration-300 ease-in-out transform ${
+                isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+              }`}
+            >
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            />
+            {/* Lista de coincidencias */}
+            {results.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+                {results.map((item) => (
+                  <li
+                    key={item.ID_Product}
+                    onClick={() => {
+                      navigate(`/detalles/${item.ID_Product}`);
+                      setIsOpen(false);
+                      setQuery("");
+                    }}
+                    className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                  >
+                    {item.Description}
+                  </li>
+                ))}
               </ul>
-            </div>
+            )}
 
-            <div className="flex items-center">
-                <div className="flex items-center ms-3">
-                  <div>
-                    <button type="button" className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" aria-expanded="false" data-dropdown-toggle="dropdown-user">
-                      <span className="sr-only">Open user menu</span>
-                      <img className="w-8 h-8 rounded-full" src="https://flowbite.com/docs/images/people/profile-picture-5.jpg" alt="user photo"/>
-                    </button>
-                  </div>
-                  <div className="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm dark:bg-gray-700 dark:divide-gray-600" id="dropdown-user">
-                    <div className="px-4 py-3" role="none">
-                      <p className="text-sm text-gray-900 dark:text-white" role="none">
-                        Neil Sims
-                      </p>
-                      <p className="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
-                        neil.sims@flowbite.com
-                      </p>
-                    </div>
-                    <ul className="py-1" role="none">
-                      <li>
-                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Settings</a>
-                      </li>
-                      <li>
-                        <a onClick={handleSignOut} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white" role="menuitem">Sign out</a>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            {loading && <p className="text-gray-500 mt-1">Buscando...</p>}
+            </div>
+            {!isOpen && (
+              <button
+                onClick={() => setIsOpen(true)}
+                className="focus:outline-none"
+              >
+                <img
+                  src="/public/icons/lupa.png"
+                  alt="lupa"
+                  className="w-6 h-6"
+                />
+              </button>
+            )}
           </div>
+          <a href="/carrito" className={styles.linkreset}><img src="/public/icons/carrito-de-compras.png" alt="carrito" className="w-6 h-6" /></a>
         </div>
-      </nav>
+      </div>
+    </nav>
 
       <div className="pt-[100px] w-full">
         <Outlet />

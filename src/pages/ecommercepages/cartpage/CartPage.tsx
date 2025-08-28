@@ -3,7 +3,7 @@ import ShoppingCart  from "../../../components/ecommercecomponents/shoppingcart/
 const CartPage: React.FC = () => {
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 pt-40">
+    <div className="min-h-screen bg-gray-100 py-10">
       <ShoppingCart />
     </div>
   );

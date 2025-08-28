@@ -19,18 +19,24 @@ import EProductsPage from '../pages/ecommercepages/productpage/ProductPage';
 import CartPage from '../pages/ecommercepages/cartpage/CartPage';
 import ProductDetails from '../pages/ecommercepages/productdetails/ProductDetails';
 import AuthPage from '../pages/authpage/AuthPage';
+import AuthLayout from '../components/layout/AuthLayout';
+import PaymentPage from '../pages/paymentpage/PaymentPage';
 
 const AppRoutes = () => {
 
   return (
     <Routes>
       {/* Rutas públicas */}
+      <Route path="/login" element={<AuthLayout />}>
+        <Route index element={<AuthPage />} />
+      </Route>
+
       <Route path="/" element={<EcommerceLayout />}>
         <Route index element={<HomePage />} />
         <Route path="productos" element={<EProductsPage />} />
-        <Route path="login" element={<AuthPage />} />
         <Route path="carrito" element={<CartPage />} /> 
         <Route path="detalles/:id" element={<ProductDetails />} />
+        <Route path="stripe" element={<PaymentPage/>} />
       </Route>
 
 

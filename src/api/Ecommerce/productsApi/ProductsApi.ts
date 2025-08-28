@@ -39,3 +39,20 @@ export const getProductById = async (id: number) => {
 
   return await res.json();
 };
+
+
+export const getProductsByDescription = async (description: string) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/ecommerce/products/searchproduct/${description}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('No se pudo obtener el producto');
+  }
+
+  return await res.json();
+};

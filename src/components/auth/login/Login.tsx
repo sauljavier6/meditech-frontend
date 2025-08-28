@@ -61,7 +61,7 @@ export default function Login({ onRegister }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen p-20 flex flex-col items-center justify-center bg-white">
+    <div className="min-h-120 flex flex-col items-center justify-center bg-white">
       <form
         onSubmit={handleLogin}
         className="bg-white p-8 rounded-lg shadow-[0_0_15px_rgba(0,0,0,0.2)] w-full max-w-sm"
