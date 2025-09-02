@@ -64,11 +64,9 @@ interface CajasProps {
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState(search);
     const [products, setProducts] = useState<SaleProduct[]>([]);
-    console.log('products',products)
     const [customerData, setCustomerData] = useState<CustomerFormData | null>(null);
     const [selectedState, setSelectedState] = useState(2);
     const [selectedPayment, setSelectedPayment] = useState<PaymentSale[]>([]);
-    console.log('selectedPayment',selectedPayment)
     const [idSale, setIdSale] = useState<number | null>(null);
     const [paymentMethod, setPaymentMethod] = useState("");
     const [amount, setAmount] = useState("");
@@ -262,6 +260,7 @@ interface CajasProps {
     };
 
     const handleSaveCustomer = (data: CustomerFormData) => {
+      setIdSale(null);
       if (data.ID_User != null) {
         console.log("guardando cliente", data);
         setCustomerData(data);
@@ -272,6 +271,7 @@ interface CajasProps {
     };
 
     const handleAddPayment = () => {
+      setIdSale(null);
       if (!paymentMethod || !amount) return;
 
       const selectedPaymentData = paymentsData.data.find(
@@ -349,6 +349,7 @@ interface CajasProps {
                   <li
                     key={variant.ID_Stock}
                     onClick={() => {
+                      setIdSale(null)
                       setProducts(prev => {
                         const exists = prev.find(p => p.id === variant.ID_Stock);
 
@@ -605,12 +606,6 @@ interface CajasProps {
         )}
 
         <div className="flex mt-10 gap-4 justify-end">
-          <button
-            className={`bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
-            disabled={!idSale}
-          >
-            Facturar
-          </button>
           <button
             onClick={handleImpresTicket}
             className={`bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}

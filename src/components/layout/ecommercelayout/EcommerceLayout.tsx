@@ -69,7 +69,7 @@ const EcommerceLayout = () => {
       <div className="px-3 py-2 lg:px-5 lg:pl-3 bg-blue-800 flex justify-between items-center">
         <ul className="flex" role="none">
           <li>
-            <a href="#" className={styles.menuitem} role="menuitem">Nosotros</a>
+            <a href="/we" className={styles.menuitem} role="menuitem">Nosotros</a>
           </li>
           <li>
             <a href="#" className={styles.menuitem} role="menuitem">Facturación</a>
@@ -116,7 +116,7 @@ const EcommerceLayout = () => {
               <a href="/productos" className={styles.linkreset}>Productos</a>
             </li>
             <li className="hover:text-blue-600 transition-colors">
-              <a href="#" className={styles.linkreset}>Cotizaciones</a>
+              <a href="/cotizaciones" className={styles.linkreset}>Cotizaciones</a>
             </li>
           </ul>
         </div>

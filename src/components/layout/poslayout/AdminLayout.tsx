@@ -88,15 +88,18 @@ const handleSignOut = () => {
                 <button
                   type="button"
                   onClick={() => toggleSubmenu("productos")}
-                  className="flex items-center justify-between w-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                  style={{ border: "none", background: "none", padding: 0 }}
+                  className="flex items-center justify-between w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                 >
-                  <div className="flex items-center gap-2 px-2 py-1">
-                    <img src="/icons/productos.png" alt="productos" className="w-5 h-5 object-contain" />
-                    <span className="ms-3 text-blue-600">Productos</span>
+                  <div className="flex items-center">
+                    <img
+                      src="/icons/productos.png"
+                      alt="productos"
+                      className="w-5 h-5 object-contain"
+                    />
+                    <span className="ms-3">Productos</span>
                   </div>
                   <svg
-                    className={`w-4 h-4 mr-2 transition-transform duration-200 ${openSubmenus.productos ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 ml-2 transition-transform duration-200 ${openSubmenus.productos ? "rotate-180" : ""}`}
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -109,7 +112,7 @@ const handleSignOut = () => {
                 </button>
 
                 {openSubmenus.productos && (
-                  <ul id="submenu-productos" className="pl-6 mt-1 space-y-1">
+                  <ul className="mt-1 space-y-1 pl-[2.25rem]"> {/* Ajusta el padding-left al ancho del ícono + margen */}
                     <li>
                       <a
                         href="/pos/productos"
@@ -118,6 +121,14 @@ const handleSignOut = () => {
                         Productos
                       </a>
                     </li>
+                    {/*<li>
+                      <a
+                        href="/pos/categorias"
+                        className="block p-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 rounded-lg"
+                      >
+                        Categorías
+                      </a>
+                    </li>*/}
                   </ul>
                 )}
               </li>
@@ -126,15 +137,20 @@ const handleSignOut = () => {
                 <button
                   type="button"
                   onClick={() => toggleSubmenu("ventas")}
-                  className="flex items-center justify-between w-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                  style={{ border: "none", background: "none", padding: 0 }}
+                  className="flex items-center justify-between w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                 >
-                  <div className="flex items-center gap-2 px-2 py-1">
-                    <img src="/icons/ventas.png" alt="productos" className="w-5 h-5 object-contain" />
-                    <span className="ms-3 text-blue-600">Ventas</span>
+                  <div className="flex items-center">
+                    <img
+                      src="/icons/ventas.png"
+                      alt="ventas"
+                      className="w-5 h-5 object-contain"
+                    />
+                    <span className="ms-3">Ventas</span>
                   </div>
                   <svg
-                    className={`w-4 h-4 mr-2 transition-transform duration-200 ${openSubmenus.ventas ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                      openSubmenus.ventas ? "rotate-180" : ""
+                    }`}
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -147,7 +163,7 @@ const handleSignOut = () => {
                 </button>
 
                 {openSubmenus.ventas && (
-                  <ul id="submenu-productos" className="pl-6 mt-1 space-y-1">
+                  <ul className="mt-1 space-y-1 pl-[2.25rem]"> {/* Ajuste de padding igual al ancho del icono + margen */}
                     <li>
                       <a
                         href="/pos/ventas"
@@ -175,19 +191,25 @@ const handleSignOut = () => {
                   </ul>
                 )}
               </li>
+
               <li>
                 <button
                   type="button"
                   onClick={() => toggleSubmenu("cajas")}
-                  className="flex items-center justify-between w-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                  style={{ border: "none", background: "none", padding: 0 }}
+                  className="flex items-center justify-between w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                 >
-                  <div className="flex items-center gap-2 px-2 py-1">
-                    <img src="/icons/cajas.png" alt="productos" className="w-5 h-5 object-contain" />
-                    <span className="ms-3 text-blue-600">Cajas</span>
+                  <div className="flex items-center">
+                    <img
+                      src="/icons/cajas.png"
+                      alt="cajas"
+                      className="w-5 h-5 object-contain"
+                    />
+                    <span className="ms-3">Cajas</span>
                   </div>
                   <svg
-                    className={`w-4 h-4 mr-2 transition-transform duration-200 ${openSubmenus.cajas ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                      openSubmenus.cajas ? "rotate-180" : ""
+                    }`}
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -200,7 +222,7 @@ const handleSignOut = () => {
                 </button>
 
                 {openSubmenus.cajas && (
-                  <ul id="submenu-productos" className="pl-6 mt-1 space-y-1">
+                  <ul className="mt-1 space-y-1 pl-[2.25rem]"> {/* Alineado con el texto */}
                     <li>
                       <a
                         href="/pos/cajas"
@@ -209,30 +231,28 @@ const handleSignOut = () => {
                         Cajas
                       </a>
                     </li>
-                    <li>
-                      <a
-                        href="/pos/categorias"
-                        className="block p-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 rounded-lg"
-                      >
-                        Cortes historicos
-                      </a>
-                    </li>
                   </ul>
                 )}
               </li>
+
               <li>
                 <button
                   type="button"
                   onClick={() => toggleSubmenu("compras")}
-                  className="flex items-center justify-between w-full text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                  style={{ border: "none", background: "none", padding: 0 }}
+                  className="flex items-center justify-between w-full p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                 >
-                  <div className="flex items-center gap-2 px-2 py-1">
-                    <img src="/icons/compras.png" alt="productos" className="w-5 h-5 object-contain" />
-                    <span className="ms-3 text-blue-600">Compras y Gastos</span>
+                  <div className="flex items-center">
+                    <img
+                      src="/icons/compras.png"
+                      alt="compras"
+                      className="w-5 h-5 object-contain"
+                    />
+                    <span className="ms-3">Compras y Gastos</span>
                   </div>
                   <svg
-                    className={`w-4 h-4 mr-2 transition-transform duration-200 ${openSubmenus.compras ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                      openSubmenus.compras ? "rotate-180" : ""
+                    }`}
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -245,7 +265,7 @@ const handleSignOut = () => {
                 </button>
 
                 {openSubmenus.compras && (
-                  <ul id="submenu-productos" className="pl-6 mt-1 space-y-1">
+                  <ul className="mt-1 space-y-1 pl-[2.25rem]"> {/* Alineado con el texto del botón */}
                     <li>
                       <a
                         href="/pos/compras"
@@ -265,6 +285,7 @@ const handleSignOut = () => {
                   </ul>
                 )}
               </li>
+              
               <li>
                   <a href="/pos/facturas" className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                     <img src="/icons/factura.png" alt="productos" className="w-5 h-5 object-contain" />

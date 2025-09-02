@@ -19,7 +19,6 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
     Description: "",
     ID_Category: 0,
     Code: "",
-    Imagen: "",
     StockData: [
       {
         Description: "",
@@ -42,9 +41,8 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
             Description: data.Description,
             ID_Category: data.ID_Category,
             Code: data.Code,
-            Imagen: data.Imagen,
             StockData: data.Stock || [],
-            Imagenes: [],
+            Imagenes: data.Imagenes,
           });
         } catch (error) {
           console.error("Error cargando producto:", error);
@@ -132,7 +130,6 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
       Description: "",
       ID_Category: 0,
       Code: "",
-      Imagen: "",
       StockData: [
         {
           Description: "",
@@ -284,7 +281,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
                 className="relative w-30 h-30 border rounded-md overflow-hidden"
               >
                 <img
-                  src={img.preview}
+                  src={img.preview || `${import.meta.env.VITE_API_URL_IMAGES}${img}`}
                   alt={`Preview ${index}`}
                   className="w-full h-full object-cover"
                 />

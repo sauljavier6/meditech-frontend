@@ -21,6 +21,8 @@ import ProductDetails from '../pages/ecommercepages/productdetails/ProductDetail
 import AuthPage from '../pages/authpage/AuthPage';
 import AuthLayout from '../components/layout/AuthLayout';
 import PaymentPage from '../pages/paymentpage/PaymentPage';
+import QuotesCart from '../components/ecommercecomponents/quotescart/QuotesCart';
+import WePage from '../pages/ecommercepages/wepage/WePage';
 
 const AppRoutes = () => {
 
@@ -37,6 +39,8 @@ const AppRoutes = () => {
         <Route path="carrito" element={<CartPage />} /> 
         <Route path="detalles/:id" element={<ProductDetails />} />
         <Route path="stripe" element={<PaymentPage/>} />
+        <Route path="cotizaciones" element={<QuotesCart/>} />
+        <Route path="we" element={<WePage/>} />
       </Route>
 
 

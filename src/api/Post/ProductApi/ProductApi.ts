@@ -13,10 +13,10 @@ interface ProductImage {
 }
 
 interface ProductInput {
+  ID_Product?: number;
   Description: string;
   ID_Category: number;
   Code: string;
-  Imagen: string;
   State?: boolean;
   StockData: StockInput[];
   Imagenes: ProductImage[]; 
@@ -103,22 +103,41 @@ export const getProductById = async (id: number) => {
 };
 
 export const updateProduct = async (productData: ProductInput) => {
+  const formData = new FormData();
+
+  // datos normales
+  if (productData.ID_Product !== undefined) {
+    formData.append("ID_Product", productData.ID_Product.toString());
+  }
+  formData.append("Code", productData.Code);
+  formData.append("Description", productData.Description);
+  formData.append("ID_Category", productData.ID_Category.toString());
+  formData.append("StockData", JSON.stringify(productData.StockData));
+  formData.append("State", productData.State ? "true" : "false");
+
+  // imágenes (solo si hay nuevas imágenes)
+  productData.Imagenes.forEach((imgObj: ProductImage) => {
+    if (imgObj.file) {
+      formData.append("Imagenes", imgObj.file);
+    }
+  });
+
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify(productData),
+    body: formData,
   });
 
   if (!res.ok) {
     const error = await res.json();
-    throw new Error(error.message || 'Error al actualizar el producto');
+    throw new Error(error.message || 'Error al actualizar producto');
   }
 
   return await res.json();
 };
+
 
 export const searchProducts = async (query: string) => {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product/search?q=${query}`, {
