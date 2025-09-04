@@ -27,10 +27,10 @@ export default function Login({ onRegister }: LoginProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (userData?.ID_Rol === 2) {
+    if (userData?.ID_Rol === 2 || userData?.ID_Rol === 3) {
       navigate('/');
     }
-    else if (userData?.ID_Rol === 1) {
+    else if (userData?.ID_Rol === 1 || userData?.ID_Rol === 4) {
       navigate('/pos/dashboard');
     }
   }, [userData, navigate]);

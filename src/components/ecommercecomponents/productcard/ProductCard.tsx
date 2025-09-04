@@ -15,12 +15,8 @@ interface Stock {
 } 
 
 interface Imagenes {
-  ID_Image: number;
-  ImagenUno: string;
-  ImagenDos: string;
-  ImagenTres: string;
-  ImagenCuatro: string;
-  ImagenCinco: string;
+  ID_ImagenProduct: number;
+  Imagen: string;
 } 
 
 interface ProductProps {
@@ -43,36 +39,25 @@ export default function ProductCard({ product }: { product: ProductProps }) {
   };
 
 
-  const images = product.ImagenProduct?.[0]
-    ? [
-        product.ImagenProduct[0].ImagenUno,
-        product.ImagenProduct[0].ImagenDos,
-        product.ImagenProduct[0].ImagenTres,
-        product.ImagenProduct[0].ImagenCuatro,
-        product.ImagenProduct[0].ImagenCinco,
-      ].filter(Boolean)
-    : ["default-image.jpg"];
-
-
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setCurrentIndex((prev) => (prev + 1) % product?.ImagenProduct?.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentIndex((prev) => (prev - 1 + product?.ImagenProduct?.length) % product?.ImagenProduct?.length);
   };
 
 return (
     <div  onClick={handleDetailsClick} className="group p-4 bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer w-full">
       <div className="relative">
         <img
-          src={`${import.meta.env.VITE_API_URL_IMAGES}${images[currentIndex]}`}
+          src={`${import.meta.env.VITE_API_URL_IMAGES}${product?.ImagenProduct?.[currentIndex].Imagen}`}
           alt={product.Description}
           className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
         />
 
         {/* Botones para cambiar imagen */}
-        {images.length > 1 && (
+        {product?.ImagenProduct?.length > 1 && (
           <>
             <button
               onClick={(e) => {

@@ -103,6 +103,7 @@ export const getProductById = async (id: number) => {
 };
 
 export const updateProduct = async (productData: ProductInput) => {
+  console.log('productData',productData)
   const formData = new FormData();
 
   // datos normales
@@ -122,6 +123,12 @@ export const updateProduct = async (productData: ProductInput) => {
     }
   });
 
+  // imágenes existentes a conservar (las que ya estaban en el producto)
+  productData.Imagenes
+    .filter((img: ProductImage) => typeof img === "string") // solo nombres de imagen existentes
+    .forEach((imgName: string) => formData.append("ExistingImages[]", imgName));
+
+  
   const res = await fetch(`${import.meta.env.VITE_API_URL}/product`, {
     method: 'PUT',
     headers: {

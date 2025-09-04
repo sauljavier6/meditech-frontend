@@ -17,7 +17,7 @@ export default function UserForm({ setUser }: { setUser: (user: { name: string; 
     }
   }, [setUser]);
 
-  if (!isClient) return null; // Evita el error de hidratación
+  if (!isClient) return null;
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;

@@ -37,6 +37,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
       const fetchProduct = async () => {
         try {
           const data = await getProductById(onEdit);
+        console.log('data',data)
           setProducts({
             Description: data.Description,
             ID_Category: data.ID_Category,

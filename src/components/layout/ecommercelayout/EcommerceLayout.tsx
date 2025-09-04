@@ -38,6 +38,21 @@ const EcommerceLayout = () => {
     };
   }, []);
 
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const searchProducts = async (term: string) => {
     if (!term) {
       setResults([]);
@@ -55,11 +70,10 @@ const EcommerceLayout = () => {
     }
   };
 
-  // Efecto para buscar mientras escribe el usuario (con debounce opcional)
   useEffect(() => {
     const timer = setTimeout(() => {
       searchProducts(query);
-    }, 300); // espera 300ms después de que deje de escribir
+    }, 300);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -67,9 +81,9 @@ const EcommerceLayout = () => {
     <div>     
     <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       <div className="px-3 py-2 lg:px-5 lg:pl-3 bg-blue-800 flex justify-between items-center">
-        <ul className="flex" role="none">
+        <ul className="hidden sm:flex" role="none">
           <li>
-            <a href="/we" className={styles.menuitem} role="menuitem">Nosotros</a>
+            <a href="/nosotros" className={styles.menuitem} role="menuitem">Nosotros</a>
           </li>
           <li>
             <a href="#" className={styles.menuitem} role="menuitem">Facturación</a>
@@ -121,14 +135,86 @@ const EcommerceLayout = () => {
           </ul>
         </div>
 
-
         <button
           className="sm:hidden text-blue-800 focus:outline-none"
-          onClick={() => setMenuOpen(!isMenuOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen(!isMenuOpen);
+          }}
         >
           <img src="/icons/menu.png" alt="menu" className="w-6 h-6" />
         </button>
 
+        {isMenuOpen && (
+          <div
+            ref={menuRef}
+            className="sm:hidden fixed top-[110px] left-0 w-full bg-white border-t shadow-md z-50 transition-transform transform duration-300"
+          >
+            <ul className="flex flex-col gap-4 p-4">
+              <li>
+                <a href="/" className={styles.linkreset} onClick={() => setMenuOpen(false)}>Inicio</a>
+              </li>
+              <li>
+                <a href="/productos" className={styles.linkreset} onClick={() => setMenuOpen(false)}>Productos</a>
+              </li>
+              <li>
+                <a href="/cotizaciones" className={styles.linkreset} onClick={() => setMenuOpen(false)}>Cotizaciones</a>
+              </li>
+              <li>
+                <a href="/nosotros" className={styles.linkreset} onClick={() => setMenuOpen(false)}>Nosotros</a>
+              </li>
+              <li>
+                <a href="/facturacion" className={styles.linkreset} onClick={() => setMenuOpen(false)}>Facturación</a>
+              </li>
+            </ul>
+
+            <div ref={containerRef} className="relative flex items-center px-4 mb-4">
+              <div
+                className={`w-full transition-all duration-300 ease-in-out transform ${
+                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+                }`}
+              >
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                />
+                {results.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+                    {results.map((item) => (
+                      <li
+                        key={item.ID_Product}
+                        onClick={() => {
+                          navigate(`/detalles/${item.ID_Product}`);
+                          setIsOpen(false);
+                          setQuery("");
+                          setMenuOpen(false);
+                        }}
+                        className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                      >
+                        {item.Description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {loading && <p className="text-gray-500 mt-1">Buscando...</p>}
+              </div>
+              {!isOpen && (
+                <button onClick={() => setIsOpen(true)} className="focus:outline-none absolute left-4 top-2">
+                  <img src="/public/icons/lupa.png" alt="lupa" className="w-6 h-6" />
+                </button>
+              )}
+            </div>
+
+            <div className="px-4 mb-4">
+              <a href="/carrito" className={styles.linkreset}>
+                <img src="/public/icons/carrito-de-compras.png" alt="carrito" className="w-6 h-6" />
+              </a>
+            </div>
+          </div>
+        )}
 
         <div className="hidden sm:flex items-center gap-6 mr-4">
           <div ref={containerRef} className="relative flex items-center">
@@ -144,7 +230,6 @@ const EcommerceLayout = () => {
               onChange={(e) => setQuery(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
             />
-            {/* Lista de coincidencias */}
             {results.length > 0 && (
               <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
                 {results.map((item) => (

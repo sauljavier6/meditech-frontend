@@ -86,7 +86,7 @@ function CheckoutFormInner() {
                   </div>
                 </div>
                 <span className="font-semibold text-gray-800">
-                  {item.Quantity} x ${item.Saleprice.toFixed(2)}
+                  {item.Quantity} x ${item.Saleprice}
                 </span>
               </div>
             ))}

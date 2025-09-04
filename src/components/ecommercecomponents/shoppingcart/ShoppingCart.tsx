@@ -39,7 +39,7 @@ export default function ShoppingCart() {
                   <div>
                     <h3 className="font-semibold text-gray-800">{item.Description}</h3>
                     <p className="text-gray-600">
-                      ${item.Saleprice.toFixed(2)} x {item.Quantity}
+                      ${item.Saleprice} x {item.Quantity}
                     </p>
                   </div>
                 </div>

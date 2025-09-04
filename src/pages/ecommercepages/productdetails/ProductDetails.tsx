@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProductById } from "../../../api/Ecommerce/productsApi/ProductsApi";
-import { useMemo } from "react";
 import { useCart } from "../../../context/CartContext";
 
 interface Category {
@@ -19,11 +18,7 @@ interface Stock {
 
 interface Imagenes {
   ID_Image: number;
-  ImagenUno: string;
-  ImagenDos: string;
-  ImagenTres: string;
-  ImagenCuatro: string;
-  ImagenCinco: string;
+  Imagen: string;
 } 
 
 interface Product {
@@ -60,6 +55,7 @@ interface CartItem {
           
           const data = await getProductById(numericId);
           setProduct(data);
+          setMainImage(data.ImagenProduct[0].Imagen)
           if (data.Stock.length > 0) {
             setSelectedSize(data.Stock[0]);
           }   
@@ -81,34 +77,13 @@ interface CartItem {
           StockDescription: selectedSize.Description,
           Saleprice: selectedSize.Saleprice,
           Quantity: 1,
-          Imagen: product.ImagenProduct?.[0]?.ImagenUno || "default-image.jpg",
+          Imagen: product.ImagenProduct?.[0].Imagen || "default-image.jpg",
         };
 
         console.log("cartItem", cartItem);
         addItem(cartItem);
       }
     };
-
-
-    const images = useMemo(() => {
-      return product?.ImagenProduct?.[0]
-        ? [
-            product.ImagenProduct[0].ImagenUno,
-            product.ImagenProduct[0].ImagenDos,
-            product.ImagenProduct[0].ImagenTres,
-            product.ImagenProduct[0].ImagenCuatro,
-            product.ImagenProduct[0].ImagenCinco,
-          ].filter(Boolean)
-        : ["default-image.jpg"];
-    }, [product]);
-
-    useEffect(() => {
-      if (images.length > 0) {
-        setMainImage(images[0]);
-      } else {
-        setMainImage("default-image.jpg");
-      }   
-    }, [images]);
 
     if (!product) {
       return <p className="text-center mt-10">Loading products...</p>;
@@ -136,17 +111,17 @@ interface CartItem {
 
             {/* Miniaturas */}
             <div className="flex gap-4 mt-4">
-              {images.map((img, index) => (
+              {product.ImagenProduct.map((img, index) => (
                 <img
                   key={index}
-                  src={`${import.meta.env.VITE_API_URL_IMAGES}${img}`}
+                  src={`${import.meta.env.VITE_API_URL_IMAGES}${img.Imagen}`}
                   alt={`Miniatura ${index}`}
                   width={100}
                   height={100}
                   className={`rounded-lg border cursor-pointer hover:opacity-80 ${
-                    img === mainImage ? "ring-2 ring-blue-500" : ""
+                    img.Imagen === mainImage ? "ring-2 ring-blue-500" : ""
                   }`}
-                  onClick={() => setMainImage(img)}
+                  onClick={() => setMainImage(img.Imagen)}
                 />
               ))}
             </div>
@@ -169,9 +144,9 @@ interface CartItem {
                     } ${item.Amount === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
                     disabled={item.Amount === 0}
                   >
-                    <span>{item.Description}</span>
-                    <span className="text-sm text-gray-500">({item.Amount})</span>
-                    <span className="ml-auto font-semibold text-green-600">
+                    <span className="text-sm text-black">{item.Description}</span>
+                    <span className="text-sm text-black">({item.Amount})</span>
+                    <span className="text-sm text-black">
                       ${item.Saleprice}
                     </span>
                   </button>

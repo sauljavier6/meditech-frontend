@@ -98,7 +98,7 @@ export default function QuotesCart() {
                         </div>
                       </td>
 
-                      <td className="text-right px-4">${item.Saleprice.toFixed(2)}</td>
+                      <td className="text-right px-4">${item.Saleprice}</td>
                       <td className="text-right px-4">
                         ${(item.Quantity * item.Saleprice).toFixed(2)}
                       </td>
@@ -140,7 +140,7 @@ export default function QuotesCart() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-800 text-sm">{item.Description}</h3>
                       <p className="text-gray-600 text-sm">
-                        ${item.Saleprice.toFixed(2)} c/u
+                        ${item.Saleprice} c/u
                       </p>
                     </div>
                     <button
@@ -195,7 +195,7 @@ export default function QuotesCart() {
             <div className="w-full max-w-4xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <input
-                type="text"
+                type="email"
                 placeholder="Correo"
                 value={user.email}
                 onChange={(e) => setUser({ ...user, email: e.target.value })}
@@ -209,7 +209,7 @@ export default function QuotesCart() {
                 className="border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
-                type="text"
+                type="phone"
                 placeholder="Teléfono"
                 value={user.phone}
                 onChange={(e) => setUser({ ...user, phone: e.target.value })}
@@ -229,7 +229,12 @@ export default function QuotesCart() {
               </button>
               <button
                 onClick={handleQuote}
-                className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition-colors"
+                disabled={!user.email || !user.name}
+                className={`w-full sm:w-auto px-6 py-3 text-white font-semibold rounded transition-colors ${
+                  !user.email || !user.name
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
               >
                 Generar Cotización
               </button>

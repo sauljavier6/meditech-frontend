@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ProductCard from "../productcard/ProductCard";
 import { useQuery } from "@tanstack/react-query";
-import { getProductsBestProduct } from "../../../api/Ecommerce/productsApi/ProductsApi";
+import { getProductsCatalog } from "../../../api/Ecommerce/productsApi/ProductsApi";
 import { getCategory } from "../../../api/Post/CategoryApi/CategoryApi";
 
 interface Category {
@@ -18,12 +18,8 @@ interface Stock {
 }
 
 interface Imagenes {
-  ID_Image: number;
-  ImagenUno: string;
-  ImagenDos: string;
-  ImagenTres: string;
-  ImagenCuatro: string;
-  ImagenCinco: string;
+  ID_ImagenProduct: number;
+  Imagen: string;
 }
 
 interface ProductProps {
@@ -37,13 +33,27 @@ interface ProductProps {
 
 const CatalogoProducts = () => {
   const [page, setPage] = useState(1);
-  const limit = 4;
+  const limit = 16;
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isCategoriesOpen, setCategoriesOpen] = useState(false);
 
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<string | null>(null);
+
+
   const { data, isLoading } = useQuery({
-    queryKey: ["products", page, limit],
-    queryFn: () => getProductsBestProduct({ page, limit }),
+    queryKey: ["products", page, limit, selectedCategory, minPrice, maxPrice, sortBy],
+    queryFn: () =>
+      getProductsCatalog({
+        page,
+        limit,
+        category: selectedCategory,
+        minPrice,
+        maxPrice,
+        sortBy,
+      }),
     placeholderData: (prev) => prev,
   });
 
@@ -78,7 +88,7 @@ const CatalogoProducts = () => {
         )}
 
         <aside
-          className={`fixed md:static left-0 h-screen w-64 bg-white border-r border-gray-200 p-6 shadow-md transform transition-transform duration-300 z-30
+          className={`fixed md:static left-0 min-h-screen w-64 bg-white border-r border-gray-200 p-6 shadow-md transform transition-transform duration-300 z-30
             ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
           <button
@@ -114,7 +124,12 @@ const CatalogoProducts = () => {
                 {categorias?.data?.map((cat: Category) => (
                   <li
                     key={cat.ID_Category}
-                    className="cursor-pointer text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-1 transition"
+                    onClick={() => setSelectedCategory(cat.ID_Category)}
+                    className={`cursor-pointer px-3 py-1 rounded-lg transition ${
+                      selectedCategory === cat.ID_Category
+                        ? "bg-blue-500 text-white"
+                        : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                    }`}
                   >
                     {cat.Description}
                   </li>
@@ -122,13 +137,23 @@ const CatalogoProducts = () => {
               </ul>
             )}
 
-            <li className="cursor-pointer flex items-center gap-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition">
-              <span className="w-2 h-2 rounded-full bg-green-400"></span>
-              Precio
+            <li className="px-3 py-2">
+              <label className="text-gray-600">Precio mínimo</label>
+              <input
+                type="number"
+                value={minPrice ?? ""}
+                onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : null)}
+                className="w-full border rounded p-1"
+              />
             </li>
-            <li className="cursor-pointer flex items-center gap-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition">
-              <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-              Ofertas
+            <li className="px-3 py-2">
+              <label className="text-gray-600">Precio máximo</label>
+              <input
+                type="number"
+                value={maxPrice ?? ""}
+                onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : null)}
+                className="w-full border rounded p-1"
+              />
             </li>
           </ul>
 
@@ -138,13 +163,24 @@ const CatalogoProducts = () => {
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               Ordenar por
             </h3>
-            <button className="w-full text-left text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition">
-              Más vendidos
-            </button>
-            <button className="w-full text-left text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition">
+            <button
+              onClick={() => setSortBy("bestPrice")}
+              className={`w-full text-left px-3 py-2 rounded-lg transition ${
+                sortBy === "bestPrice"
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              }`}
+            >
               Mejor precio
             </button>
-            <button className="w-full text-left text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition">
+            <button
+              onClick={() => setSortBy("newest")}
+              className={`w-full text-left px-3 py-2 rounded-lg transition ${
+                sortBy === "newest"
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              }`}
+            >
               Nuevos
             </button>
           </div>
@@ -152,60 +188,65 @@ const CatalogoProducts = () => {
 
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {data?.data?.map((product: ProductProps) => (
-              <div key={product.ID_Product} className="relative">
-                <ProductCard product={product} />
+            {data?.data && data.data.length > 0 ? (
+              data.data.map((product: ProductProps) => (
+                <div key={product.ID_Product} className="relative">
+                  <ProductCard product={product} />
+                </div>
+              ))
+            ) : (
+              <div className="w-full text-center py-4">
+                <p className="text-gray-500">No hay productos disponibles</p>
               </div>
-            ))}
+            )}
+          </div>
+          <div className="flex justify-end items-center mt-6 mb-6 mr-6 space-x-2">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((old) => Math.max(old - 1, 1))}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 flex items-center justify-center"
+            >
+              <img src="/icons/flecha-negra.png" alt="Anterior" className="w-4 h-4" />
+            </button>
+
+            {data && data.totalPages >= 1 && (
+              <>
+                {(() => {
+                  const maxButtons = 5;
+                  let start = Math.max(1, page - Math.floor(maxButtons / 2));
+                  let end = start + maxButtons - 1;
+
+                  if (end > data.totalPages) {
+                    end = data.totalPages;
+                    start = Math.max(1, end - maxButtons + 1);
+                  }
+
+                  return Array.from({ length: end - start + 1 }, (_, i) => start + i).map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setPage(num)}
+                      className={`px-3 py-1 rounded ${
+                        page === num
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-200 hover:bg-gray-300"
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  ));
+                })()}
+              </>
+            )}
+
+            <button
+              disabled={page >= (data?.totalPages || 1)}
+              onClick={() => setPage((old) => old + 1)}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 flex items-center justify-center"
+            >
+              <img src="/icons/flecha-negra.png" alt="Siguiente" className="w-4 h-4 rotate-180" />
+            </button>
           </div>
         </main>
-      </div>
-
-      <div className="flex justify-end items-center mt-6 mb-6 mr-6 space-x-2">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((old) => Math.max(old - 1, 1))}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 flex items-center justify-center"
-        >
-          <img src="/icons/flecha-negra.png" alt="Anterior" className="w-4 h-4" />
-        </button>
-
-        {data && data.totalPages >= 1 && (
-          <>
-            {(() => {
-              const maxButtons = 5;
-              let start = Math.max(1, page - Math.floor(maxButtons / 2));
-              let end = start + maxButtons - 1;
-
-              if (end > data.totalPages) {
-                end = data.totalPages;
-                start = Math.max(1, end - maxButtons + 1);
-              }
-
-              return Array.from({ length: end - start + 1 }, (_, i) => start + i).map((num) => (
-                <button
-                  key={num}
-                  onClick={() => setPage(num)}
-                  className={`px-3 py-1 rounded ${
-                    page === num
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  {num}
-                </button>
-              ));
-            })()}
-          </>
-        )}
-
-        <button
-          disabled={page >= (data?.totalPages || 1)}
-          onClick={() => setPage((old) => old + 1)}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 flex items-center justify-center"
-        >
-          <img src="/icons/flecha-negra.png" alt="Siguiente" className="w-4 h-4 rotate-180" />
-        </button>
       </div>
     </>
   );
