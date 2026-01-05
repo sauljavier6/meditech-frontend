@@ -1,71 +1,404 @@
-// src/components/FacturaForm.tsx
-import { useState } from 'react';
-import style from './FacturasForm.module.scss';
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import {
+  getFacturacionSaleById,
+  postFactura,
+} from "../../../api/Post/FacturacionApi/FacturacionApi";
 
-interface FacturaFormProps {
-  dataFactura?: any;
+interface Iva {
+  Description: string;
+  Iva: number;
 }
 
-const FacturaForm = ({dataFactura}:FacturaFormProps) => {
+interface Product {
+  Description: string;
+  Code: string;
+  Iva: Iva;
+}
 
-  const [items, setItems] = useState([
-    { description: "Paracetamol 500gr", quantity: 2, unit_price: 50 },
-    { description: "XL3 500gr", quantity: 1, unit_price: 40 },
-  ]);
+interface Stock {
+  Description: string;
+  Code: string;
+  Purchaseprice: number;
+  Saleprice: number;
+}
 
+interface Item {
+  ID_Product?: number;
+  Quantity: number;
+  Product: Product;
+  Stock: Stock;
+  Saleprice: number;
+}
+
+const FacturaForm = () => {
+  const [searchTerm, setSearchTerm] = useState<number | null>(null);
+  const [debouncedTicket, setDebouncedTicket] = useState<number | null>(null);
+  const [pago, setPago] = useState({
+    formaPago: "",
+    metodoPago: "",
+  });
+
+  const [receptor, setReceptor] = useState({
+    rfc: "",
+    razonsocial: "",
+    usoCFDI: "",
+    regimenFiscal: "",
+    codigopostal: "S01",
+  });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTicket(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data, isFetching } = useQuery({
+    queryKey: ["facturacionbyid", debouncedTicket],
+    queryFn: () => getFacturacionSaleById(debouncedTicket),
+    enabled: !!debouncedTicket,
+    placeholderData: (prev) => prev,
+  });
+
+  useEffect(() => {
+    if (data?.Facturacion) {
+      setReceptor({
+        rfc: data.Facturacion.Rfc || "",
+        razonsocial: data.Facturacion.RazonSocial || "",
+        codigopostal: data.Facturacion.CodigoPostal || "",
+        regimenFiscal: data.Facturacion.RegimenFiscal || "",
+        usoCFDI: "S01",
+      });
+    }
+  }, [data]);
+
+  const hasData = data && data.SaleProduct && data.SaleProduct.length > 0;
+
+  const subtotal = data?.Subtotal;
+  const iva = data?.Iva;
+  const total = data?.Total;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasData) return;
+    // Aquí va el timbrado
+    const datafactura = {
+      ID_Sale: data?.ID_Sale,
+      RFC: receptor.rfc,
+      RazonSocial: receptor.razonsocial,
+      CodigoPostal: receptor.codigopostal,
+      RegimenFiscal: receptor.regimenFiscal,
+      UsoCFDI: receptor.usoCFDI,
+      FormaPago: pago.formaPago,
+      MetodoPago: pago.metodoPago,
+      Subtotal: subtotal,
+      Iva: iva,
+      Total: total,
+      Items: data?.SaleProduct,
+    };
+
+    console.log("receptor:", receptor);
+
+    await postFactura(datafactura!);
+  };
+
+  const disabledataform =
+    !receptor.rfc ||
+    !receptor.razonsocial ||
+    !receptor.codigopostal ||
+    !receptor.regimenFiscal ||
+    !receptor.usoCFDI ||
+    !pago.formaPago ||
+    !pago.metodoPago;
+  const disable = data?.FacturacionTicket.length <= 0 ? true : disabledataform;
 
   return (
-    <form className="max-w-xl mx-auto bg-white p-4 shadow rounded">
-      <h2 className="text-xl font-bold mb-4">Generar Factura</h2>
+    <form onSubmit={handleSubmit} className="mx-auto bg-white p-6">
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+        Facturar Ticket
+      </h2>
 
-      <label className="block mb-2">RFC</label>
-      <input type="text" className="border px-2 py-1 w-full mb-4" required />
+      {/* =======================
+         DATOS DEL TICKET
+         ======================= */}
+      <section className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 border-b pb-1">
+          Datos del Ticket
+        </h3>
 
-      <label className="block mb-2">Razón Social</label>
-      <input type="text" className="border px-2 py-1 w-full mb-4" required />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Número de Ticket
+            </label>
 
-      <label className="block mb-2">Uso CFDI</label>
-      <select className="border px-2 py-1 w-full mb-4">
-        <option value="G03">G03 - Gastos en general</option>
-        <option value="P01">P01 - Por definir</option>
-        <option value="D01">D01 - Honorarios médicos</option>
-      </select>
+            <input
+              type="number"
+              value={searchTerm !== null ? String(searchTerm) : ""}
+              onChange={(e) =>
+                setSearchTerm(
+                  e.target.value === "" ? null : Number(e.target.value)
+                )
+              }
+              className={`
+              w-full rounded-md border px-3 py-2 text-sm transition
+              focus:outline-none focus:ring-2
+              ${
+                data?.FacturacionTicket
+                  ? "border-yellow-400 focus:ring-yellow-400 focus:border-yellow-400"
+                  : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+              }
+            `}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Estado
+            </label>
 
-      <label className="block mb-2">Forma de Pago</label>
-      <select className="border px-2 py-1 w-full mb-4">
-        <option value="03">03 - Transferencia</option>
-        <option value="01">01 - Efectivo</option>
-        <option value="04">04 - Tarjeta de crédito</option>
-      </select>
+            {/* 🔄 LOADING */}
+            {isFetching && (
+              <p className="mt-1 text-sm text-blue-600 animate-pulse">
+                Buscando ticket...
+              </p>
+            )}
 
-      <h3 className="font-semibold mb-2">Conceptos (Productos/Servicios)</h3>
-      {items.map((item, index) => (
-        <div key={index} className="mb-2 flex gap-2">
-          <input
-            type="text"
-            placeholder="Descripción"
-            value={item.description}
-            className="border px-2 py-1 w-full"
-          />
-          <input
-            type="number"
-            placeholder="Cantidad"
-            value={item.quantity}
-            className="border px-2 py-1 w-24"
-          />
-          <input
-            type="number"
-            placeholder="Precio"
-            value={item.unit_price}
-            className="border px-2 py-1 w-24"
-          />
+            {/* ❌ SIN DATOS */}
+            {!isFetching && debouncedTicket && !hasData && (
+              <p className="mt-1 text-sm text-red-600">
+                ❌ No se encontró información para este ticket
+              </p>
+            )}
+
+            {/* ⚠️ YA TIMBRADO */}
+            {!isFetching && hasData && data?.FacturacionTicket  && (
+              <div className="flex items-center gap-2 rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2">
+                <span className="text-yellow-600 text-sm">⚠️</span>
+                <div className="text-sm text-yellow-800">
+                  Este ticket <strong>ya fue timbrado</strong>
+                </div>
+              </div>
+            )}
+
+            {/* ✅ LISTO PARA TIMBRAR */}
+            {!isFetching && hasData && !data?.FacturacionTicket && (
+              <p className="mt-1 text-sm text-green-600">
+                ✅ Ticket válido, listo para timbrar
+              </p>
+            )}
+          </div>
         </div>
-      ))}
+      </section>
 
+      {/* =======================
+         SOLO SE MUESTRA SI HAY DATA
+         ======================= */}
+      {hasData && (
+        <>
+          {/* DATOS DEL RECEPTOR */}
+          <section className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 border-b pb-1">
+              Datos del Receptor
+            </h3>
 
-      <button type="submit" className={style.btngenerarfactura}>
-        Generar Factura
-      </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  RFC
+                </label>
+                <input
+                  required
+                  value={receptor.rfc || ""}
+                  onChange={(e) =>
+                    setReceptor({
+                      ...receptor,
+                      rfc: e.target.value.toUpperCase(),
+                    })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Razón Social
+                </label>
+                <input
+                  required
+                  value={receptor.razonsocial || ""}
+                  onChange={(e) =>
+                    setReceptor({ ...receptor, razonsocial: e.target.value })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Código Postal Fiscal
+                </label>
+                <input
+                  required
+                  value={receptor.codigopostal || ""}
+                  onChange={(e) =>
+                    setReceptor({ ...receptor, codigopostal: e.target.value })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Régimen Fiscal
+                </label>
+                <select
+                  value={receptor.regimenFiscal || ""}
+                  onChange={(e) =>
+                    setReceptor({
+                      ...receptor,
+                      regimenFiscal: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Selecciona régimen fiscal</option>
+                  <option value="601">601 - General de Ley</option>
+                  <option value="612">
+                    612 - Personas Físicas con Actividades Empresariales
+                  </option>
+                  <option value="616">616 - Sin obligaciones fiscales</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Uso CFDI
+                </label>
+                <select
+                  value={receptor.usoCFDI}
+                  onChange={(e) =>
+                    setReceptor({ ...receptor, usoCFDI: e.target.value })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white
+                    focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Selecciona</option>
+                  <option value="G03">G03 - Gastos en general</option>
+                  <option value="S01">S01 - Sin efectos fiscales</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* DATOS DE PAGO */}
+          <section className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 border-b pb-1">
+              Datos de Pago
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Forma de Pago
+                </label>
+                <select
+                  value={pago.formaPago}
+                  onChange={(e) =>
+                    setPago({ ...pago, formaPago: e.target.value })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="01">01 - Efectivo</option>
+                  <option value="03">03 - Transferencia</option>
+                  <option value="04">04 - Tarjeta</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Método de Pago
+                </label>
+                <select
+                  value={pago.metodoPago}
+                  onChange={(e) =>
+                    setPago({ ...pago, metodoPago: e.target.value })
+                  }
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="PUE">PUE - Pago en una sola exhibición</option>
+                  <option value="PPD">PPD - Pago en parcialidades</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* CONCEPTOS */}
+          <section className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 border-b pb-1">
+              Conceptos
+            </h3>
+
+            <div className="space-y-2">
+              {data?.SaleProduct?.map((item: Item, i: number) => (
+                <div key={i} className="grid grid-cols-4 gap-2 text-sm">
+                  <input
+                    disabled
+                    className="rounded-md border border-gray-300 px-2 py-1 bg-gray-50"
+                    value={`${item.Product.Description} ${item.Stock.Description}`}
+                  />
+                  <input
+                    disabled
+                    className="rounded-md border border-gray-300 px-2 py-1 bg-gray-50 text-center"
+                    value={item.Quantity}
+                  />
+                  <input
+                    disabled
+                    className="rounded-md border border-gray-300 px-2 py-1 bg-gray-50 text-right"
+                    value={item.Saleprice}
+                  />
+                  <input
+                    disabled
+                    className="rounded-md border border-gray-300 px-2 py-1 bg-gray-50 text-center"
+                    value={item.Product.Code}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* TOTALES */}
+          <div className="text-right text-sm text-gray-700 mb-6">
+            <div>Subtotal: ${subtotal}</div>
+            <div>IVA: ${iva}</div>
+            <div className="text-lg font-bold text-gray-900">
+              Total: ${total}
+            </div>
+          </div>
+
+          <button
+            disabled={disable}
+            type="submit"
+            className={`
+              w-full md:w-auto px-6 py-2 rounded-md text-sm font-semibold transition
+              ${
+                disable
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }
+            `}
+          >
+            Timbrar Factura
+          </button>
+        </>
+      )}
     </form>
   );
 };

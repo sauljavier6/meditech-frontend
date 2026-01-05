@@ -6,12 +6,14 @@ import Compras from "../../components/compras/comprasygastos/compras/Compras";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { deleteCompras } from "../../api/Post/ComprasApi/ComprasApi";
+import { useAuth } from "../../hooks/useAuth";
 
 const ComprasPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [resetChecks, setResetChecks] = useState(false);
+  const { isAdmin, isTrabajador } = useAuth();
 
   const queryClient = useQueryClient();
 
@@ -49,25 +51,26 @@ const ComprasPage = () => {
     <div>
     {!formOpen && (
     <div className="p-4 bg-gray-50 rounded-lg">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+      <div className="flex flex-col lg:flex-row md:items-center md:justify-between mb-4 gap-2">
         <h1 className={styles.title}>Compras</h1>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           <input
             type="text"
             placeholder="Buscar compra..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="px-3 py-2 border border-gray-300 rounded-md w-full sm:w-64"
+            className="px-3 py-2 border border-gray-300 rounded-md w-full"
           />
-
+          {isAdmin || isTrabajador && (
           <button
             onClick={handleCreateCompra}
             className={styles.buttonCrearProducto}
           >
             Registrar compra
           </button>
-
+          )}
+          {isAdmin || isTrabajador && (
           <button
             onClick={handleDeleteProduct}
             disabled={selectedIds?.length === 0}
@@ -79,6 +82,7 @@ const ComprasPage = () => {
           >
             Eliminar
           </button>
+          )}
         </div>
       </div>
 
@@ -89,8 +93,8 @@ const ComprasPage = () => {
      )}
 
     {formOpen && (
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-between mb-4">
+      <div className="sm:p-4 bg-gray-50 rounded-lg">
+        <div className="p-2 flex items-center justify-between mb-4">
           <button onClick={() => setFormOpen(false)} className="flex items-center gap-2 hover:text-blue-600">
             <img
               src="/icons/flecha.png"

@@ -15,7 +15,7 @@ const DashboardPage = () => {
           </div>
           <div className="ml-4">
             <p className="text-gray-500 dark:text-gray-400 text-sm">Ventas Hoy</p>
-            <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">$5,230</p>
+            
           </div>
         </div>
 
@@ -25,7 +25,7 @@ const DashboardPage = () => {
           </div>
           <div className="ml-4">
             <p className="text-gray-500 dark:text-gray-400 text-sm">Pedidos</p>
-            <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">124</p>
+            
           </div>
         </div>
 
@@ -35,7 +35,7 @@ const DashboardPage = () => {
           </div>
           <div className="ml-4">
             <p className="text-gray-500 dark:text-gray-400 text-sm">Clientes</p>
-            <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">87</p>
+            
           </div>
         </div>
 
@@ -45,7 +45,7 @@ const DashboardPage = () => {
           </div>
           <div className="ml-4">
             <p className="text-gray-500 dark:text-gray-400 text-sm">Inventario</p>
-            <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">450</p>
+            
           </div>
         </div>
       </div>

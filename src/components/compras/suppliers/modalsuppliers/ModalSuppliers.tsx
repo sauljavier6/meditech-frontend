@@ -157,8 +157,10 @@ const ModalSuppliers = ({ onClose, onSave, onEdit }: ModalCajasProps) => {
   const isPersonalDataComplete = formData.Name.trim() !== "" && formData.Phone.trim() !== "" && formData.Email.trim() !== "";
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md sm:max-w-lg md:max-w-xl">
+        
+        {/* Header */}
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-xl font-bold text-gray-800">Crear Proveedor</h2>
           <button onClick={handleClose} className="p-2 rounded hover:bg-gray-100">
@@ -166,74 +168,83 @@ const ModalSuppliers = ({ onClose, onSave, onEdit }: ModalCajasProps) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Correo
-                </label>
-                <input
-                  id="Email"
-                  type="email"
-                  value={formData.Email}
-                  onChange={(event) => setFormData(prev => ({ ...prev, Email: event.target.value }))}
-                  placeholder="Correo"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Nombre del cliente
-                </label>
-                <input
-                  id="Name"
-                  type="text"
-                  value={formData.Name}
-                  onChange={(event) =>
-                    setFormData((prev) => ({ ...prev, Name: event.target.value }))
-                  }
-                  placeholder="Nombre del cliente"
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Teléfono
-                </label>
-                <input
-                  id="Phone"
-                  type="tel"
-                  value={formData.Phone}
-                  onChange={(event) => {
-                    const soloNumeros = event.target.value.replace(/\D/g, '');
-                    if (soloNumeros.length <= 10) {
-                      setFormData((prev) => ({ ...prev, Phone: soloNumeros }));
-                    }
-                  }}
-                  placeholder="Teléfono"
-                  required
-                  minLength={10}
-                  maxLength={10}
-                  inputMode="numeric"
-                  pattern="[0-9]{10}"
-                  title="Debe contener exactamente 10 dígitos numéricos"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-                />
-              </div>
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {/* Correo */}
+            <div className="col-span-1 sm:col-span-2">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Correo
+              </label>
+              <input
+                id="Email"
+                type="email"
+                value={formData.Email}
+                onChange={(event) =>
+                  setFormData((prev) => ({ ...prev, Email: event.target.value }))
+                }
+                placeholder="Correo"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
             </div>
 
+            {/* Nombre */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Nombre del proveedor
+              </label>
+              <input
+                id="Name"
+                type="text"
+                value={formData.Name}
+                onChange={(event) =>
+                  setFormData((prev) => ({ ...prev, Name: event.target.value }))
+                }
+                placeholder="Nombre del proveedor"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+
+            {/* Teléfono */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700">
+                Teléfono
+              </label>
+              <input
+                id="Phone"
+                type="tel"
+                value={formData.Phone}
+                onChange={(event) => {
+                  const soloNumeros = event.target.value.replace(/\D/g, '');
+                  if (soloNumeros.length <= 10) {
+                    setFormData((prev) => ({ ...prev, Phone: soloNumeros }));
+                  }
+                }}
+                placeholder="Teléfono"
+                required
+                minLength={10}
+                maxLength={10}
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                title="Debe contener exactamente 10 dígitos numéricos"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+          </div>
+
+          {/* Botón */}
           <div className="flex justify-center mt-6">
             <button
               type="submit"
-              className={`${styles.submitButton} ${!isPersonalDataComplete ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`${styles.submitButton} ${
+                !isPersonalDataComplete ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
               disabled={!isPersonalDataComplete}
             >
-              Guardar cliente
+              Guardar proveedor
             </button>
           </div>
         </form>

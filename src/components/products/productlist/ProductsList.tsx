@@ -32,17 +32,18 @@ interface ProductsListProps {
   onDelete: (ids: number[]) => void;
   resetChecks: boolean;
   onResetComplete: () => void;
+  searchTerm: string;
 }
 
 
-const ProductsList = ({onDelete, resetChecks, onResetComplete}: ProductsListProps ) => {
+const ProductsList = ({onDelete, resetChecks, onResetComplete, searchTerm}: ProductsListProps ) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const { data } = useQuery({
-    queryKey: ['products', page, limit],
-    queryFn: () => getProducts({ page, limit }),
+    queryKey: ['products', page, limit, searchTerm],
+    queryFn: () => getProducts({ page, limit, searchTerm }),
     placeholderData: (prev) => prev,
   });
   

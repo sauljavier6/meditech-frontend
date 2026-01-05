@@ -21,9 +21,10 @@ interface Product {
 interface buyData {
   ID_Proveedor: number | null;
   Total: number;
+  Subtotal: number;
+  Iva: number;
   Balance_Total: number;
   ID_Operador: string | null;
-
   Payments: Payment[];
   items: Product[];
 }

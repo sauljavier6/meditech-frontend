@@ -17,15 +17,17 @@ interface ProductInput {
   Description: string;
   ID_Category: number;
   Code: string;
+  Codesat: string;
   State?: boolean;
+  ID_Iva: number;
   StockData: StockInput[];
   Imagenes: ProductImage[]; 
 }
 
 const token = localStorage.getItem('token')
 
-export const getProducts = async ({ page = 1, limit = 10 }) => {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/product?page=${page}&limit=${limit}`, {
+export const getProducts = async ({ page = 1, limit = 10, searchTerm='' }) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/product?page=${page}&limit=${limit}&searchTerm=${searchTerm}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -39,13 +41,16 @@ export const getProducts = async ({ page = 1, limit = 10 }) => {
 
 
 export const postProduct = async (productData: ProductInput) => {
+  console.log('productData',productData)
   const formData = new FormData();
 
   // datos normales
   formData.append("Code", productData.Code);
+  formData.append("Codesat", productData.Codesat);
   formData.append("Description", productData.Description);
   formData.append("ID_Category", productData.ID_Category.toString());
   formData.append("StockData", JSON.stringify(productData.StockData));
+  formData.append("ID_Iva", JSON.stringify(productData.ID_Iva));
 
   // imágenes
   productData.Imagenes.forEach((imgObj: ProductImage ) => {
@@ -111,9 +116,11 @@ export const updateProduct = async (productData: ProductInput) => {
     formData.append("ID_Product", productData.ID_Product.toString());
   }
   formData.append("Code", productData.Code);
+  formData.append("Codesat", productData.Codesat);
   formData.append("Description", productData.Description);
   formData.append("ID_Category", productData.ID_Category.toString());
   formData.append("StockData", JSON.stringify(productData.StockData));
+  formData.append("ID_Iva", JSON.stringify(productData.ID_Iva));
   formData.append("State", productData.State ? "true" : "false");
 
   // imágenes (solo si hay nuevas imágenes)

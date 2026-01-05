@@ -111,31 +111,26 @@ const ModalCustomers = ({ onClose, onSave, onEdit }: ModalCustomersProps) => {
     fetchCustomer();
   }, [user?.Email]);
 
-
-
-
   const isPersonalDataComplete = user.Name.trim() !== "" && user.Phone.trim() !== "" && user.Email.trim() !== "";
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-2">
+      <div className="bg-white rounded-xl shadow-xl p-4 sm:p-6 w-full max-w-[95%] sm:max-w-md lg:max-w-lg">
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Crear Cliente</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800">Crear Cliente</h2>
           <button onClick={onClose} className="p-2 rounded hover:bg-gray-100">
             <img src="/icons/close.png" alt="Cerrar" className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tabs (Switch) */}
-        <div className="flex justify-center gap-0 mb-6 bg-gray-200 p-0 rounded-[50px]">
+        {/* Tabs */}
+        <div className="flex justify-center gap-0 mb-6 bg-gray-200 rounded-[50px] overflow-hidden">
           <button
             type="button"
             onClick={() => setActiveTab("personal")}
-            className={`px-4 py-2 rounded ${
-              activeTab === "personal"
-                ? styles.tabActive
-                : styles.tabinActive
+            className={`flex-1 px-3 py-2 text-sm md:text-base ${
+              activeTab === "personal" ? styles.tabActive : styles.tabinActive
             }`}
           >
             Datos personales
@@ -143,25 +138,26 @@ const ModalCustomers = ({ onClose, onSave, onEdit }: ModalCustomersProps) => {
           <button
             type="button"
             onClick={() => setActiveTab("facturacion")}
-            className={`px-4 py-2 rounded ${
-              activeTab === "facturacion"
-                ? styles.tabActive
-                : styles.tabinActive
+            className={`flex-1 px-3 py-2 text-sm md:text-base ${
+              activeTab === "facturacion" ? styles.tabActive : styles.tabinActive
             }`}
           >
             Datos de facturación
           </button>
         </div>
 
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          onSave(user);
-          onClose();
-        }}>
-
+        {/* Formulario */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSave(user);
+            onClose();
+          }}
+        >
           {activeTab === "personal" && (
-            <div className="grid grid-cols-1 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Correo */}
+              <div className="md:col-span-2">
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Correo
                 </label>
@@ -169,13 +165,16 @@ const ModalCustomers = ({ onClose, onSave, onEdit }: ModalCustomersProps) => {
                   id="Email"
                   type="email"
                   value={user.Email}
-                  onChange={(event) => setUser(prev => ({ ...prev, Email: event.target.value }))}
+                  onChange={(event) =>
+                    setUser((prev) => ({ ...prev, Email: event.target.value }))
+                  }
                   placeholder="Correo"
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
+              {/* Nombre */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Nombre del cliente
@@ -189,10 +188,11 @@ const ModalCustomers = ({ onClose, onSave, onEdit }: ModalCustomersProps) => {
                   }
                   placeholder="Nombre del cliente"
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
                 />
               </div>
 
+              {/* Teléfono */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Teléfono
@@ -202,7 +202,7 @@ const ModalCustomers = ({ onClose, onSave, onEdit }: ModalCustomersProps) => {
                   type="tel"
                   value={user.Phone}
                   onChange={(event) => {
-                    const soloNumeros = event.target.value.replace(/\D/g, '');
+                    const soloNumeros = event.target.value.replace(/\D/g, "");
                     if (soloNumeros.length <= 10) {
                       setUser((prev) => ({ ...prev, Phone: soloNumeros }));
                     }
@@ -214,95 +214,99 @@ const ModalCustomers = ({ onClose, onSave, onEdit }: ModalCustomersProps) => {
                   inputMode="numeric"
                   pattern="[0-9]{10}"
                   title="Debe contener exactamente 10 dígitos numéricos"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
                 />
               </div>
             </div>
           )}
 
           {activeTab === "facturacion" && (
-            <div className="grid grid-cols-1 gap-4">
-               <div>
-                <label htmlFor="rfcCliente" className="block mb-1 text-sm font-medium text-gray-700">
-                  Razon social
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Razon social */}
+              <div className="md:col-span-2">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Razón social
                 </label>
                 <input
                   id="razonsocialCliente"
                   type="text"
                   value={user.RazonSocial}
-                  onChange={(event) => setUser(prev => ({ ...prev,RazonSocial: event.target.value }))}
-                  placeholder="Razon social"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  onChange={(event) =>
+                    setUser((prev) => ({ ...prev, RazonSocial: event.target.value }))
+                  }
+                  placeholder="Razón social"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
                 />
               </div>
+
+              {/* CP */}
               <div>
-                <label htmlFor="rfcCliente" className="block mb-1 text-sm font-medium text-gray-700">
-                  Codigo postal
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Código postal
                 </label>
                 <input
                   id="codigopostalCliente"
                   type="text"
                   value={user.CodigoPostal}
-                  onChange={(event) => setUser(prev => ({ ...prev, CodigoPostal: event.target.value }))}
-                  placeholder="Codigo postal"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  onChange={(event) =>
+                    setUser((prev) => ({ ...prev, CodigoPostal: event.target.value }))
+                  }
+                  placeholder="Código postal"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
                 />
-              </div> 
+              </div>
+
+              {/* RFC */}
               <div>
-                <label htmlFor="rfcCliente" className="block mb-1 text-sm font-medium text-gray-700">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
                   RFC
                 </label>
                 <input
                   id="rfcCliente"
                   type="text"
                   value={user.Rfc}
-                  onChange={(event) => setUser(prev => ({ ...prev, Rfc: event.target.value }))}
+                  onChange={(event) =>
+                    setUser((prev) => ({ ...prev, Rfc: event.target.value }))
+                  }
                   placeholder="RFC"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
                 />
               </div>
-              <div>
-                <label htmlFor="regimenFiscal" className="block mb-1 text-sm font-medium text-gray-700">
-                  Régimen fiscal
+
+              {/* Régimen fiscal */}
+              <div className="md:col-span-2">
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Régimen Fiscal
                 </label>
                 <select
-                  id="cfdi"
                   value={user?.RegimenFiscal || ""}
-                  onChange={(e) => setUser((prev) => ({ ...prev, RegimenFiscal: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  onChange={(e) =>
+                    setUser((prev) => ({ ...prev, RegimenFiscal: e.target.value }))
+                  }
+                  className="w-full px-4 py-2 border border-gray-500 rounded-md
+                            focus:ring-2 focus:ring-blue-400"
+                  required
                 >
-                  <option value="">Selecciona uso del CFDI</option>
-                  <option value="G01">G01 - Adquisición de mercancías</option>
-                  <option value="G02">G02 - Devoluciones, descuentos o bonificaciones</option>
-                  <option value="G03">G03 - Gastos en general</option>
-                  <option value="I01">I01 - Construcciones</option>
-                  <option value="I02">I02 - Mobiliario y equipo de oficina por inversiones</option>
-                  <option value="I03">I03 - Equipo de transporte</option>
-                  <option value="I04">I04 - Equipo de cómputo y accesorios</option>
-                  <option value="I05">I05 - Dados, troqueles, moldes, matrices y herramental</option>
-                  <option value="I06">I06 - Comunicaciones telefónicas</option>
-                  <option value="I07">I07 - Comunicaciones satelitales</option>
-                  <option value="I08">I08 - Otra maquinaria y equipo</option>
-                  <option value="D01">D01 - Honorarios médicos, dentales y gastos hospitalarios</option>
-                  <option value="D02">D02 - Gastos médicos por incapacidad o discapacidad</option>
-                  <option value="D03">D03 - Gastos funerales</option>
-                  <option value="D04">D04 - Donativos</option>
-                  <option value="D05">D05 - Intereses reales efectivamente pagados por créditos hipotecarios (casa habitación)</option>
-                  <option value="D06">D06 - Aportaciones voluntarias al SAR</option>
-                  <option value="D07">D07 - Primas por seguros de gastos médicos</option>
-                  <option value="D08">D08 - Gastos de transportación escolar obligatoria</option>
-                  <option value="D09">D09 - Depósitos en cuentas para el ahorro, primas que tengan como base planes de pensiones</option>
-                  <option value="D10">D10 - Pagos por servicios educativos (colegiaturas)</option>
-                  <option value="P01">P01 - Por definir</option>
+                  <option value="">Selecciona régimen fiscal</option>
+                  <option value="601">601 - General de Ley Personas Morales</option>
+                  <option value="605">605 - Sueldos y Salarios</option>
+                  <option value="606">606 - Arrendamiento</option>
+                  <option value="608">608 - Demás ingresos</option>
+                  <option value="612">612 - Personas Físicas con Actividades Empresariales</option>
+                  <option value="616">616 - Sin obligaciones fiscales</option>
+                  <option value="621">621 - Incorporación Fiscal</option>
                 </select>
               </div>
             </div>
           )}
 
+          {/* Botón */}
           <div className="flex justify-center mt-6">
             <button
               type="submit"
-              className={`${styles.submitButton} ${!isPersonalDataComplete ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`${styles.submitButton} ${
+                !isPersonalDataComplete ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               disabled={!isPersonalDataComplete}
             >
               Guardar cliente

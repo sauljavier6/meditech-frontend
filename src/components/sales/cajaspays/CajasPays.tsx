@@ -50,9 +50,6 @@ interface CajasProps {
     const [selectedProductsDelete, setSelectedProductsDelete] = useState<number[]>([]);
     const allSelected = products.length > 0 && products.every((p) => selectedProductsDelete.includes(p.id));
     const [modalOpen, setModalOpen] = useState(false);
-    const subtotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
-    const iva = subtotal * 0.16;
-    const total = subtotal + iva;
 
     const { data: paymentsData } = useQuery({
       queryKey: ['payments'],
@@ -60,10 +57,10 @@ interface CajasProps {
     });
 
     const { data } = useQuery({
-      queryKey: ['sale'],
+      queryKey: ['sale', ID_Sale],
       queryFn: () => getSaleById(ID_Sale),
+      enabled: ID_Sale !== null && ID_Sale !== undefined,
     });
-
 
     useEffect(() => {
       if (data) {
@@ -72,7 +69,7 @@ interface CajasProps {
           productId: item.ID_Product,
           name: item.Product.Description + ' - ' + item.Stock.Description,
           quantity: item.Quantity,
-          price: item.Stock.Saleprice,
+          price: item.Saleprice,
         }));
         setProducts(mappedProducts);
 
@@ -241,9 +238,12 @@ interface CajasProps {
 
     return (
       <div className="p-6 bg-white rounded-xl shadow-md max-w-3xl mx-auto">
-        <div className="border rounded p-4 mb-4">
+        
+        <div className="border rounded p-4 mb-4 overflow-x-auto">
           <h3 className="font-semibold mb-2">Productos en venta</h3>
-          <table className="w-full text-sm">
+
+          {/* Vista tabla en pantallas medianas y grandes */}
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr className="border-b">
                 <th className="text-left">
@@ -287,21 +287,68 @@ interface CajasProps {
                 </tr>
               ))}
             </tbody>
-
           </table>
+
+          {/* Vista tipo cards en móviles */}
+          <div className="sm:hidden space-y-3">
+            {products.map((p) => (
+              <div
+                key={p.id}
+                className="border rounded-lg p-3 shadow-sm flex flex-col gap-2"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedProductsDelete.includes(p.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSelectedProductsDelete((prev) =>
+                          checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                        );
+                      }}
+                    />
+                    <span className="font-medium">{p.name}</span>
+                  </div>
+                  <span className="text-gray-700 font-semibold">
+                    ${p.price}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Cantidad:</span>
+                  <span className="text-gray-800">{p.quantity}</span>
+                </div>
+
+                <div className="flex justify-between items-center border-t pt-2">
+                  <span className="font-medium">Subtotal:</span>
+                  <span className="text-green-600 font-semibold">
+                    ${(p.price * p.quantity).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        <div className="flex flex-col md:flex-wrap md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="text-sm w-full md:flex-1 md:min-w-[200px]">
+            <p>Subtotal: ${data?.Subtotal}</p>
+            <p>IVA: ${data?.Iva}</p>
+            <p className="font-semibold">Total: ${data?.Total}</p>
+            <p className="font-semibold">Balance Total: ${data?.Balance_Total}</p>
+          </div>
           <button onClick={handleCreateCustomer} className={styles.buttonAgregarCliente}>
             + Agregar cliente
           </button>
+        </div>
 
-          
-          <div className="text-sm w-full md:w-auto">
+        <div className="flex flex-col md:flex-wrap md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="text-sm w-full md:flex-1 md:min-w-[200px]">
             <select
               id="metodoPago"
               name="metodoPago"
-              className="border rounded px-3 py-2 w-full md:w-auto"
+              className="border rounded px-3 py-2 w-full"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
@@ -312,12 +359,6 @@ interface CajasProps {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="text-sm w-full md:w-auto">
-            <p>Subtotal: ${subtotal.toFixed(2)}</p>
-            <p>IVA (16%): ${iva.toFixed(2)}</p>
-            <p className="font-semibold">Total: ${total.toFixed(2)}</p>
           </div>
         </div>
 
@@ -370,7 +411,7 @@ interface CajasProps {
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Pagos agregados:</h3>
 
-            <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
+            <div className="hidden md:grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
               <span>Método</span>
               <span>Monto</span>
               <span>Referencia</span>
@@ -381,30 +422,45 @@ interface CajasProps {
               {selectedPayment.map((p, i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-4 gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
+                  className="grid md:grid-cols-4 gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
                 >
-                  <span>{p.Description}</span>
-                  <span>${p.Monto}</span>
-                  <span>{p.ReferenceNumber || "—"}</span>
-                  <button
-                    disabled={p.ID_SalePayment !== undefined}
-                    onClick={() => handleDeletePayment(i)}
-                    className={`${
-                      p.ID_SalePayment !== undefined
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : 'text-red-600 hover:underline'
-                    }`}
-                  >
-                    Eliminar
-                  </button>
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Método: </span>
+                    <span>{p.Description}</span>
+                  </div>
+
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Monto: </span>
+                    <span>${p.Monto}</span>
+                  </div>
+
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Referencia: </span>
+                    <span>{p.ReferenceNumber || "—"}</span>
+                  </div>
+
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Acción: </span>
+                    <button
+                      disabled={p.ID_SalePayment !== undefined}
+                      onClick={() => handleDeletePayment(i)}
+                      className={`${
+                        p.ID_SalePayment !== undefined
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "text-red-600 hover:underline"
+                      }`}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
         )}
 
-
-        <div className="flex mt-10 gap-4 justify-end">
+        <div className="flex flex-col sm:flex-row flex-wrap mt-10 gap-2 sm:justify-end w-full">
           <button
             className={`bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={!idSale}
@@ -423,9 +479,9 @@ interface CajasProps {
             className={`bg-yellow-500 text-white font-semibold py-2 px-4 rounded hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed`}
             disabled={!idSale}
           >
-            Enviar por correos
+            Enviar por correo
           </button>
-          <button onClick={handleSavePay} className={styles.buttonAgregarCliente} disabled={selectedPayment.length === 0}>
+          <button onClick={handleSavePay} disabled={selectedPayment.length === 0} className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
             Completar
           </button>
         </div>

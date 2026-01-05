@@ -9,6 +9,7 @@ import { getStates } from "../../../api/Post/StateApi/StateApi";
 import { getPayments } from "../../../api/Post/PaymentApi/PaymentApi";
 import { sendTicket } from "../../../api/Post/TicketApi/TicketApi";
 import { createRetiro } from "../../../api/Post/RetiroApi/RetiroApi";
+import { postFactura } from "../../../api/Post/FacturacionApi/FacturacionApi";
 
 interface SaleProduct {
   id: number;
@@ -18,6 +19,7 @@ interface SaleProduct {
   price: number;
   maxAmount?: number;
   stockVariant?: string;
+  iva: number;
 }
 
 interface SaleItem {
@@ -39,6 +41,8 @@ interface SaleData {
   ID_User: number;
   Total: number;
   Balance_Total: number;
+  Subtotal: number;
+  Iva: number;
   ID_State: number;
   Payment: PaymentSale[];
   ID_Operador: number;
@@ -80,7 +84,7 @@ interface CajasProps {
     const [activeTab, setActiveTab] = useState<"caja" | "retiro">("caja");
 
     const subtotal = products.reduce((sum, p) => sum + p.price * p.quantity, 0);
-    const iva = subtotal * 0.16;
+    const iva = products.reduce((sum, p) => sum + (p.price * p.quantity * p.iva), 0);
     const total = subtotal + iva;
 
     const idusuario = localStorage.getItem('idusuario')
@@ -140,7 +144,6 @@ interface CajasProps {
       },
       onSuccess: (data) => {
           setCustomerData(data.data);
-          setProducts([]);
           toast.success("Cliente registrado con éxito", {
           position: "top-right",
           progressClassName: "custom-progress",
@@ -157,12 +160,27 @@ interface CajasProps {
           });
       },
       onSuccess: () => {
-          setIdSale(null);
           toast.success("Ticket enviado con éxito", {
           position: "top-right",
           progressClassName: "custom-progress",
           });
           queryClient.invalidateQueries({ queryKey: ['sendticket'] });
+      },
+    });
+
+    const { mutate: facturarMutate } = useMutation({
+      mutationFn: postFactura,
+      onError: (error) => {
+          toast.error(`${error.message}`, {
+          position: "top-right",
+          });
+      },
+      onSuccess: () => {
+          toast.success("Solicitud de facturacion guardada", {
+          position: "top-right",
+          progressClassName: "custom-progress",
+          });
+          queryClient.invalidateQueries({ queryKey: ['facturaslist'] });
       },
     });
 
@@ -176,6 +194,8 @@ interface CajasProps {
         ID_User: customerData?.ID_User ?? 0,
         Total: total,
         Balance_Total: total,
+        Subtotal: subtotal,
+        Iva: iva,
         ID_State: selectedState,
         ID_Operador: Number(idusuario),
         Lote: Lote,
@@ -204,10 +224,8 @@ interface CajasProps {
 
     const handleSaveCustomer = (data: CustomerFormData) => {
       if (data.ID_User != null) {
-        console.log("guardando cliente", data);
         setCustomerData(data);
       } else {
-        console.log("Creando nuevo cliente", data);
         customerCreateMutate(data);
       }
     };
@@ -242,22 +260,24 @@ interface CajasProps {
     const handleImpresTicket = async () => {
       try {
         window.open(`${import.meta.env.VITE_API_URL}/ticket/${idSale}`, "_blank");
-        setIdSale(null);
       } catch (error) {
         console.error("Error al imprimir el ticket:", error);
       }
     };
 
-
     const handleSendTicket = () => {
-      console.log("Imprimir ticket", idSale);
       if (idSale !== null) {
         sendTiket(idSale);
       }
     };
 
+    const handleFacturar = () => {
+      if (!idSale) return;
+      facturarMutate(idSale);
+    };
 
-// Función para manejar el retiro de dinero
+
+    // Función para manejar el retiro de dinero
     const [idRetiro, setIdRetiro] = useState<number | null>(null);
     const [dataRetiro, setdataRetiro] = useState({
       Amount: "",
@@ -360,10 +380,12 @@ interface CajasProps {
               <span>{product.Description} - {product.Code}</span>
               <ul className="pl-4">
                 {product.Stock?.map((variant) => (
+                  console.log(product.ID_Iva.Iva, variant),
                   <li
                     key={variant.ID_Stock}
                     onClick={() => {
                       setProducts((prev) => {
+                        setIdSale(null)
                         const exists = prev.find(p => p.id === variant.ID_Stock);
                         if (exists) {
                           return prev.map(p =>
@@ -372,6 +394,7 @@ interface CajasProps {
                               : p
                           );
                         } else {
+                          setIdSale(null);
                           return [
                             ...prev,
                             {
@@ -382,6 +405,7 @@ interface CajasProps {
                               price: variant.Saleprice,
                               maxAmount: variant.Amount,
                               stockVariant: variant.Description,
+                              iva: product.Iva.Iva,
                             }
                           ];
                         }
@@ -405,9 +429,11 @@ interface CajasProps {
           )}
         </div>
 
-        <div className="border rounded p-4 mb-4">
+        <div className="border rounded p-4 mb-4 overflow-x-auto">
           <h3 className="font-semibold mb-2">Productos en venta</h3>
-          <table className="w-full text-sm">
+
+          {/* Vista tabla en pantallas medianas y grandes */}
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr className="border-b">
                 <th className="text-left">
@@ -470,29 +496,87 @@ interface CajasProps {
                 </tr>
               ))}
             </tbody>
-
           </table>
+
+          {/* Vista tipo cards en móviles */}
+          <div className="sm:hidden space-y-3">
+            {products.map((p) => (
+              <div
+                key={p.id}
+                className="border rounded-lg p-3 shadow-sm flex flex-col gap-2"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedProductsDelete.includes(p.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSelectedProductsDelete((prev) =>
+                          checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                        );
+                      }}
+                    />
+                    <span className="font-medium">{p.name}</span>
+                  </div>
+                  <span className="text-gray-700 font-semibold">${p.price}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">Cantidad:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={p.maxAmount || 999}
+                    value={p.quantity}
+                    onChange={(e) => {
+                      const newQuantity = parseInt(e.target.value);
+                      setProducts((prev) =>
+                        prev.map((item) =>
+                          item.id === p.id
+                            ? { ...item, quantity: newQuantity }
+                            : item
+                        )
+                      );
+                    }}
+                    className="w-20 text-center border rounded px-1 py-0.5"
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-between items-center border-t pt-2">
+                  <span className="font-medium">Subtotal:</span>
+                  <span className="text-green-600 font-semibold">
+                    ${(p.price * p.quantity).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        <div className="flex flex-col md:flex-wrap md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="text-sm w-full md:flex-1 md:min-w-[200px]">
+            <p>Subtotal: ${subtotal.toFixed(2)}</p>
+            <p>IVA: ${iva.toFixed(2)}</p>
+            <p className="font-semibold">Total: ${total.toFixed(2)}</p>
+          </div>
           <button onClick={handleCreateCustomer} className={styles.buttonAgregarCliente}>
             + Agregar cliente
           </button>
+        </div>
 
-          <div className="text-sm w-full md:w-auto">
+        <div className="flex flex-col md:flex-wrap md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="text-sm w-full md:flex-1 md:min-w-[200px]">
             <select
               id="tipoPago"
               name="tipoPago"
-              className="border rounded px-3 py-2 w-full md:w-auto"
+              className="border rounded px-3 py-2 w-full"
               value={selectedState}
               onChange={(e) => setSelectedState(Number(e.target.value))}
             >
-              <option value="" disabled>
-                Selecciona un estado
-              </option>
-
+              <option value="" disabled>Selecciona un estado</option>
               {isLoading && <option>Cargando...</option>}
-
               {states?.map((state: any) => (
                 <option key={state.ID_State} value={state.ID_State}>
                   {state.Description}
@@ -501,12 +585,11 @@ interface CajasProps {
             </select>
           </div>
 
-          
-          <div className="text-sm w-full md:w-auto">
+          <div className="text-sm w-full md:flex-1 md:min-w-[200px]">
             <select
               id="metodoPago"
               name="metodoPago"
-              className="border rounded px-3 py-2 w-full md:w-auto"
+              className="border rounded px-3 py-2 w-full"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
@@ -518,17 +601,11 @@ interface CajasProps {
               ))}
             </select>
           </div>
-
-          <div className="text-sm w-full md:w-auto">
-            <p>Subtotal: ${subtotal.toFixed(2)}</p>
-            <p>IVA (16%): ${iva.toFixed(2)}</p>
-            <p className="font-semibold">Total: ${total.toFixed(2)}</p>
-          </div>
         </div>
 
         {paymentMethod && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="w-full">
               <label htmlFor="paymentAmount" className="block text-sm font-medium text-gray-700">
                 Monto del pago
               </label>
@@ -539,12 +616,12 @@ interface CajasProps {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Ej. 500.00"
-                className="w-full border rounded px-3 py-2"
+                className="w-full max-w-full border rounded px-3 py-2"
                 required
               />
             </div>
 
-            <div>
+            <div className="w-full">
               <label htmlFor="reference" className="block text-sm font-medium text-gray-700">
                 Número de referencia/Notas
               </label>
@@ -555,7 +632,7 @@ interface CajasProps {
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="Ej. #REF1234"
-                className="w-full border rounded px-3 py-2"
+                className="w-full max-w-full border rounded px-3 py-2"
               />
             </div>
 
@@ -563,7 +640,8 @@ interface CajasProps {
               <button
                 type="button"
                 onClick={handleAddPayment}
-                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                disabled={!amount}
+                className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Agregar pago
               </button>
@@ -575,7 +653,7 @@ interface CajasProps {
           <div className="mt-6">
             <h3 className="font-semibold mb-2">Pagos agregados:</h3>
 
-            <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
+            <div className="hidden md:grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
               <span>Método</span>
               <span>Monto</span>
               <span>Referencia</span>
@@ -586,17 +664,32 @@ interface CajasProps {
               {selectedPayment.map((p, i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-4 gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
+                  className="grid md:grid-cols-4 gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
                 >
-                  <span>{p.Description}</span>
-                  <span>${p.Monto.toFixed(2)}</span>
-                  <span>{p.ReferenceNumber || "—"}</span>
-                  <button
-                    onClick={() => handleDeletePayment(i)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Eliminar
-                  </button>
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Método: </span>
+                    <span>{p.Description}</span>
+                  </div>
+
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Monto: </span>
+                    <span>${p.Monto.toFixed(2)}</span>
+                  </div>
+
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Referencia: </span>
+                    <span>{p.ReferenceNumber || "—"}</span>
+                  </div>
+
+                  <div className="flex md:block justify-between">
+                    <span className="font-medium md:hidden">Acción: </span>
+                    <button
+                      onClick={() => handleDeletePayment(i)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -604,28 +697,33 @@ interface CajasProps {
         )}
 
 
-        <div className="flex mt-10 gap-4 justify-end">
+        <div className="flex flex-col sm:flex-row flex-wrap mt-10 gap-2 sm:justify-end w-full">
           <button
-            className={`bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            onClick={handleFacturar}
+            className="w-full sm:w-auto bg-amber-600 text-white font-semibold py-2 px-4 rounded hover:bg-amber-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!idSale}
           >
             Facturar
           </button>
           <button
             onClick={handleImpresTicket}
-            className={`bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            className="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!idSale}
           >
             Imprimir ticket
           </button>
           <button
             onClick={handleSendTicket}
-            className={`bg-yellow-500 text-white font-semibold py-2 px-4 rounded hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            className="w-full sm:w-auto bg-yellow-500 text-white font-semibold py-2 px-4 rounded hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!idSale}
           >
-            Enviar por correos
+            Enviar por correo
           </button>
-          <button onClick={handleSaveSale} className={styles.buttonAgregarCliente} disabled={selectedPayment.length === 0}>
+          <button
+            onClick={handleSaveSale}
+            disabled={products.length === 0}
+            className="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-4 rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Completar
           </button>
         </div>

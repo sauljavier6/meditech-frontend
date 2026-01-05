@@ -8,6 +8,12 @@ interface Category {
   Description: string;
 };
 
+interface Iva {
+  ID_Iva: number;
+  Description: string;
+  Iva: number;
+};
+
 interface Stock {
   ID_Stock: number;
   Amount: number;
@@ -27,6 +33,7 @@ interface Product {
   Code: string;
   Category: Category;
   Stock: Stock[];
+  Iva: Iva;
   ImagenProduct: Imagenes[];
 }
 
@@ -36,7 +43,8 @@ interface CartItem {
   ID_Stock: number;
   StockDescription: string;
   Saleprice: number;
-  Quantity: number;  
+  Quantity: number;
+  Iva: number;  
   Imagen?: string;
 }
 
@@ -77,6 +85,7 @@ interface CartItem {
           StockDescription: selectedSize.Description,
           Saleprice: selectedSize.Saleprice,
           Quantity: 1,
+          Iva: product.Iva.Iva,
           Imagen: product.ImagenProduct?.[0].Imagen || "default-image.jpg",
         };
 

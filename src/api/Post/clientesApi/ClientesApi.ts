@@ -1,7 +1,7 @@
 const token = localStorage.getItem('token')
 
-export const getClientes = async ({ page = 1, limit = 10 }) => {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/clientes?page=${page}&limit=${limit}`, {
+export const getClientes = async ({ page = 1, limit = 10, searchTerm='' }) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/clientes?page=${page}&limit=${limit}&searchTerm=${searchTerm}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

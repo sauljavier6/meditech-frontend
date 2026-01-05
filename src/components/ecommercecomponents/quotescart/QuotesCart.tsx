@@ -9,13 +9,15 @@ export default function QuotesCart() {
     phone: "",
   });
   
-  const { state, removeItem, increaseQty, decreaseQty, clearCart, getTotal } = useCart();
+  const { state, removeItem, increaseQty, decreaseQty, clearCart,  getSubTotal, getIva, getTotal } = useCart();
 
   const handleQuote = async () => {
     try {
       const saleData = {
         User: user,
         Total: getTotal(),
+        Subtotal: getSubTotal(),
+        Iva: getIva(),
         items: state.items.map((item) => ({
           productId: item.ID_Product,
           stockId: item.ID_Stock,
@@ -181,15 +183,31 @@ export default function QuotesCart() {
               ))}
             </div>
 
-            {/* Total */}
             <div className="flex justify-end mt-6">
-              <div className="text-right">
-                <p className="text-gray-700 text-lg font-medium">Total estimado</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  ${getTotal().toFixed(2)}
+              <div className="text-right space-y-2">
+                <p className="text-gray-700 text-lg">
+                  Subtotal:{" "}
+                  <span className="font-semibold">
+                    ${getSubTotal().toFixed(2)}
+                  </span>
+                </p>
+
+                <p className="text-gray-700 text-lg">
+                  IVA:{" "}
+                  <span className="font-semibold">
+                    ${getIva().toFixed(2)}
+                  </span>
+                </p>
+
+                <p className="text-gray-700 text-lg">
+                  Total estimado:{" "}
+                  <span className="font-semibold">
+                    ${(getSubTotal() + getIva()).toFixed(2)}
+                  </span>
                 </p>
               </div>
             </div>
+
 
             {/* 🖥️ Tabla y formulario responsive */}
             <div className="w-full max-w-4xl mx-auto">

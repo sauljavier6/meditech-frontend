@@ -6,7 +6,8 @@ import ModalCustomers from "../../components/sales/customers/modalcustomers/Moda
 import { postCustomerSale, putCustomerSale } from "../../api/Post/SaleApi/SaleApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-//import { deleteMultipleCustomers } from "../../api/Post/clientesApi/ClientesApi";
+import { deleteMultipleCustomers } from "../../api/Post/clientesApi/ClientesApi";
+import { useAuth } from "../../hooks/useAuth";
 
 interface CustomerFormData {
   ID_User?: number | undefined;
@@ -24,8 +25,7 @@ const CustomersPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState<number[]>([]);
   const [resetChecks, setResetChecks] = useState(false);
-
-  console.log("isEdit", isEdit);
+  const { isAdmin, isTrabajador } = useAuth();
 
 const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -74,7 +74,7 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     },
   });
 
-  /*const { mutate: customerDeleteMutate } = useMutation({
+  const { mutate: customerDeleteMutate } = useMutation({
     mutationFn: deleteMultipleCustomers,
       onError: (error) => {
           toast.error(`${error.message}`, {
@@ -88,11 +88,12 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           });
         queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
-  });*/
+  });
 
   const handleSaveCustomer = (data: CustomerFormData) => {
     if (data.ID_User != null) {
-      customerUpdateMutate(data);
+      const payload = { ...data, ID_Sale: data.ID_User };
+      customerUpdateMutate(payload);
     } else {
       customerCreateMutate(data);
     }
@@ -104,35 +105,37 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsEdit([])
   };
 
-  /*const handleDelete = async () => {
+  const handleDelete = async () => {
     try {
       alert(`¿Estás seguro de que deseas eliminar cliente(s)?`);
       customerDeleteMutate(isEdit);
     } catch (error) {
       toast.error((error as Error).message);
     }
-  };*/
+  };
 
   return (
     <div className="p-4 bg-gray-50 rounded-lg">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+      <div className="flex flex-col lg:flex-row md:items-center md:justify-between mb-4 gap-2">
         <h1 className={styles.title}>Clientes</h1>
 
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
           <input
             type="text"
             placeholder="Buscar cliente..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="px-3 py-2 border border-gray-300 rounded-md w-full sm:w-64"
+            className="px-3 py-2 border border-gray-300 rounded-md w-full"
           />
-
+          {isAdmin || isTrabajador&& (
           <button
             onClick={handleCreateCustomer}
             className={styles.buttonCrearProducto}
           >
-            Crear Cliente
+            Crear
           </button>
+          )}
+          {isAdmin || isTrabajador&& (
           <button
             onClick={handleEditCustomer}
             disabled={isEdit.length === 0 || isEdit.length > 1}
@@ -143,25 +146,24 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           >
             Editar
           </button>
-          {/*
+          )}
+          {isAdmin && (
           <button
             onClick={handleDelete}
             disabled={isEdit.length === 0}
-            className={`px-4 py-2 rounded font-semibold transition ml-2
+            className={`px-4 py-2 rounded font-semibold transition
               ${isEdit.length === 0
                 ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 : 'bg-red-600 text-white hover:bg-red-700'}`}
           >
             Eliminar
           </button>
-          */}
-          
-        </div>
+          )} 
+        </div> 
       </div>
 
-      {/* Pasamos el término de búsqueda al componente de la lista */}
       <CustomersList onEdit={(id) => setIsEdit(id)} resetChecks={resetChecks}
-      onResetComplete={() => setResetChecks(false)}/>
+      onResetComplete={() => setResetChecks(false)} searchTerm={searchTerm}/>
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

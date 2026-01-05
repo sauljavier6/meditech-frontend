@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSale } from "../../../api/Post/SaleApi/SaleApi";
+import { getSaleWeb } from "../../../api/Post/SaleApi/SaleApi";
 import { useEffect, useState } from "react";
 
 export interface ISale {
@@ -16,8 +16,10 @@ export interface ISale {
   Balance_Total: number;
   ID_State: number;
   State?: boolean;
+  StateWeb?: boolean;
   ID_Operador: number;
   Batch: string;
+  createdAt: string
 }
 
 interface SaleListProps {
@@ -27,14 +29,14 @@ interface SaleListProps {
   searchTerm: string;
 }
 
-const SalesList = ({onSelected, resetChecks, onResetComplete, searchTerm }:SaleListProps ) => {
+const SalesWebList = ({onSelected, resetChecks, onResetComplete, searchTerm }:SaleListProps ) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const { data } = useQuery({
     queryKey: ['sales', page, limit, searchTerm],
-    queryFn: () => getSale({ page, limit, searchTerm }),
+    queryFn: () => getSaleWeb({ page, limit, searchTerm }),
     placeholderData: (prev) => prev,
   });
 
@@ -62,10 +64,10 @@ const SalesList = ({onSelected, resetChecks, onResetComplete, searchTerm }:SaleL
     if (!data?.data) return;
 
     if (selectedIds.length === data.data.length) {
-      setSelectedIds([]);
+      setSelectedIds([]); // deselecciona todo
     } else {
       const allIds = data.data.map((prod: ISale) => prod.ID_Sale);
-      setSelectedIds(allIds);
+      setSelectedIds(allIds); // selecciona todo
     }
   };
 
@@ -85,9 +87,8 @@ const SalesList = ({onSelected, resetChecks, onResetComplete, searchTerm }:SaleL
             <th className="px-2 py-2">Numero Venta</th>
             <th className="px-2 py-2">Cliente</th>
             <th className="px-2 py-2">Total</th>
-            <th className="px-2 py-2">Deuda</th>
-            <th className="px-2 py-2">Cajero</th>
-            <th className="px-2 py-2">Lote</th>
+            <th className="px-2 py-2">Fecha</th>
+            <th className="px-2 py-2">Estado</th>
           </tr>
         </thead>
         <tbody>
@@ -102,9 +103,15 @@ const SalesList = ({onSelected, resetChecks, onResetComplete, searchTerm }:SaleL
               <td className="px-2 py-2">{prod.ID_Sale}</td>
               <td className="px-2 py-2">{prod.ID_User? prod.user.Name: "Cliente no asignado"}</td>
               <td className="px-2 py-2">{prod.Total}</td>
-              <td className="px-2 py-2">${prod.Balance_Total}</td>
-              <td className="px-2 py-2">{prod.operator.Name}</td>
-              <td className="px-2 py-2">{prod.Batch}</td>
+                            <td className="px-5 py-2">{(() => {
+                const d = new Date(prod.createdAt);
+                const day = d.getDate().toString().padStart(2, '0');
+                const month = (d.getMonth() + 1).toString().padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+              })()}
+              </td>
+              <td className="px-2 py-2">{prod.StateWeb? 'Pendiente': 'Completada'}</td>
             </tr>
           ))}
         </tbody>
@@ -160,4 +167,4 @@ const SalesList = ({onSelected, resetChecks, onResetComplete, searchTerm }:SaleL
   );
 };
 
-export default SalesList;
+export default SalesWebList;

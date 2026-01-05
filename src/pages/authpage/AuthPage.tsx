@@ -8,7 +8,6 @@ const SuppliersPage = () => {
 
   return (
     <div>
-    {/* Pasamos el término de búsqueda al componente de la lista */}
     {isRegistering ? (
     <Register onBack={() => setIsRegistering(false)} />
     ) : (

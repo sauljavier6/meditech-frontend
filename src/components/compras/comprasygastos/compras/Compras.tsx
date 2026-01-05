@@ -16,6 +16,7 @@ interface Product {
   purchaseprice: number;
   amount?: number;
   variant?: string;
+  iva: number;
 }
 
 interface Payment {
@@ -41,7 +42,7 @@ interface Payment {
     const [modalOpen, setModalOpen] = useState(false);
 
     const subtotal = products.reduce((sum, p) => sum + p.purchaseprice * p.quantity, 0);
-    const iva = subtotal * 0.16;
+    const iva = products.reduce((sum, p) => sum + (p.purchaseprice * p.quantity * p.iva), 0);
     const total = subtotal + iva;
 
     const idusuario = localStorage.getItem('idusuario')
@@ -90,6 +91,8 @@ interface Payment {
         ID_Proveedor: idSupplier!,
         Total: total, 
         Balance_Total: total, 
+        Iva: iva,
+        Subtotal: subtotal,
         ID_Operador: idusuario!,
         items: products,
         Payments: selectedPayment
@@ -191,6 +194,7 @@ interface Payment {
                               purchaseprice: variant.Purchaseprice,
                               amount: variant.Amount,
                               variant: variant.Description,
+                              iva: product.Iva.Iva,
                             }
                           ];
                         }
@@ -214,9 +218,11 @@ interface Payment {
           )}
         </div>
 
-        <div className="border rounded p-4 mb-4">
-          <h3 className="font-semibold mb-2">Productos en venta</h3>
-          <table className="w-full text-sm">
+        <div className="border rounded p-4 mb-4 overflow-x-auto">
+          <h3 className="font-semibold mb-2">Productos en compra</h3>
+
+          {/* Vista tabla en pantallas medianas y grandes */}
+          <table className="hidden sm:table w-full text-sm">
             <thead>
               <tr className="border-b">
                 <th className="text-left">
@@ -243,38 +249,38 @@ interface Payment {
               {products.map((p) => (
                 <tr key={p.id} className="border-b">
                   <td>
-                  <input
-                    type="checkbox"
-                    checked={selectedProductsDelete.includes(p.id)}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setSelectedProductsDelete((prev) =>
-                        checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
-                      );
-                    }}
-                  />
+                    <input
+                      type="checkbox"
+                      checked={selectedProductsDelete.includes(p.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSelectedProductsDelete((prev) =>
+                          checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                        );
+                      }}
+                    />
                   </td>
                   <td className="py-1">{p.name}</td>
                   <td className="text-center">
-                  <input
-                    type="number"
-                    value={p.quantity}
-                    onChange={(e) => {
-                      const newQuantity = parseInt(e.target.value);
-                      setProducts((prev) =>
-                        prev.map((item) =>
-                          item.id === p.id
-                            ? { ...item, quantity: newQuantity }
-                            : item
-                        )
-                      );
-                    }}
-                    className="w-16 text-center border rounded px-1 py-0.5"
-                    required
-                  />
+                    <input
+                      type="number"
+                      value={p.quantity}
+                      onChange={(e) => {
+                        const newQuantity = parseInt(e.target.value);
+                        setProducts((prev) =>
+                          prev.map((item) =>
+                            item.id === p.id
+                              ? { ...item, quantity: newQuantity }
+                              : item
+                          )
+                        );
+                      }}
+                      className="w-16 text-center border rounded px-1 py-0.5"
+                      required
+                    />
                   </td>
                   <td className="text-center">
-                   <input
+                    <input
                       type="number"
                       step="any"
                       value={p.saleprice}
@@ -293,7 +299,7 @@ interface Payment {
                     />
                   </td>
                   <td className="text-center">
-                   <input
+                    <input
                       type="number"
                       step="any"
                       value={p.purchaseprice}
@@ -311,40 +317,132 @@ interface Payment {
                       required
                     />
                   </td>
-                  <td className="text-center">${(p.purchaseprice * p.quantity).toFixed(2)}</td>
+                  <td className="text-center">
+                    ${(p.purchaseprice * p.quantity).toFixed(2)}
+                  </td>
                 </tr>
               ))}
             </tbody>
-
           </table>
+
+          {/* Vista tipo cards en móviles */}
+          <div className="sm:hidden space-y-3">
+            {products.map((p) => (
+              <div
+                key={p.id}
+                className="border rounded-lg p-3 shadow-sm flex flex-col gap-2 divide-y"
+              >
+                <div className="flex justify-between items-center pb-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedProductsDelete.includes(p.id)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSelectedProductsDelete((prev) =>
+                          checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                        );
+                      }}
+                    />
+                    <span className="font-medium">{p.name}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-gray-500">Stock comprado:</span>
+                  <input
+                    type="number"
+                    value={p.quantity}
+                    onChange={(e) => {
+                      const newQuantity = parseInt(e.target.value);
+                      setProducts((prev) =>
+                        prev.map((item) =>
+                          item.id === p.id ? { ...item, quantity: newQuantity } : item
+                        )
+                      );
+                    }}
+                    className="w-20 text-center border rounded px-1 py-0.5"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-gray-500">Precio venta:</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={p.saleprice}
+                    onChange={(e) => {
+                      const newSaleprice = parseFloat(e.target.value) || 0;
+                      setProducts((prev) =>
+                        prev.map((item) =>
+                          item.id === p.id
+                            ? { ...item, saleprice: newSaleprice }
+                            : item
+                        )
+                      );
+                    }}
+                    className="w-20 text-center border rounded px-1 py-0.5"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-gray-500">Precio compra:</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={p.purchaseprice}
+                    onChange={(e) => {
+                      const newPurchaseprice = parseFloat(e.target.value) || 0;
+                      setProducts((prev) =>
+                        prev.map((item) =>
+                          item.id === p.id
+                            ? { ...item, purchaseprice: newPurchaseprice }
+                            : item
+                        )
+                      );
+                    }}
+                    className="w-20 text-center border rounded px-1 py-0.5"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <span className="font-medium">Subtotal:</span>
+                  <span className="text-green-600 font-semibold">
+                    ${(p.purchaseprice * p.quantity).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        <div className="flex flex-col md:flex-wrap md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="text-sm w-full md:w-auto">
+            <p>Subtotal: ${subtotal.toFixed(2)}</p>
+            <p>IVA: ${iva.toFixed(2)}</p>
+            <p className="font-semibold">Total: ${total.toFixed(2)}</p>
+          </div>
           <button onClick={handleCreateCustomer} className={styles.buttonAgregarCliente}>
             + Agregar Proveedor
           </button>
+        </div>
 
-          <div className="text-sm w-full md:w-auto">
+        <div className="flex flex-col md:flex-wrap md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="text-sm w-full md:flex-1 md:min-w-[200px]">
             <select
               id="metodoPago"
               name="metodoPago"
-              className="border rounded px-3 py-2 w-full md:w-auto"
+              className="border rounded px-3 py-2 w-full"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
-              <option value="">Método de pago de compra</option>
+              <option value="">Selecciona un método de pago</option>
               {paymentsData?.data?.map((payment: any) => (
                 <option key={payment.ID_Payment} value={payment.ID_Payment}>
                   {payment.Description}
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="text-sm w-full md:w-auto">
-            <p>Subtotal: ${subtotal.toFixed(2)}</p>
-            <p>IVA (16%): ${iva.toFixed(2)}</p>
-            <p className="font-semibold">Total: ${total.toFixed(2)}</p>
           </div>
         </div>
 
@@ -394,25 +492,40 @@ interface Payment {
         )}
 
         {selectedPayment.length > 0 && (
-          <div className="mt-6">
-            <h3 className="font-semibold mb-2">Pagos agregados:</h3>
+        <div className="mt-6">
+          <h3 className="font-semibold mb-2">Pagos agregados:</h3>
 
-            <div className="grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
-              <span>Método</span>
-              <span>Monto</span>
-              <span>Referencia</span>
-              <span>Acción</span>
-            </div>
+          {/* Encabezados: ocultar en móviles y mostrar solo en pantallas md+ */}
+          <div className="hidden md:grid grid-cols-4 gap-4 font-semibold text-gray-700 border-b pb-1 mb-2">
+            <span>Método</span>
+            <span>Monto</span>
+            <span>Referencia</span>
+            <span>Acción</span>
+          </div>
 
-            <div className="space-y-2">
-              {selectedPayment.map((p, i) => (
-                <div
-                  key={i}
-                  className="grid grid-cols-4 gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
-                >
-                  <span>{p.Description}</span>
-                  <span>${p.Monto.toFixed(2)}</span>
-                  <span>{p.ReferenceNumber || "—"}</span>
+          <div className="space-y-2">
+            {selectedPayment.map((p, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 bg-gray-50 p-2 rounded border text-sm items-center"
+              >
+                {/* En móviles se muestran con etiqueta */}
+                <div className="md:hidden">
+                  <span className="font-semibold">Método: </span>{p.Description}
+                </div>
+                <div className="hidden md:block">{p.Description}</div>
+
+                <div className="md:hidden">
+                  <span className="font-semibold">Monto: </span>${p.Monto.toFixed(2)}
+                </div>
+                <div className="hidden md:block">${p.Monto.toFixed(2)}</div>
+
+                <div className="md:hidden">
+                  <span className="font-semibold">Referencia: </span>{p.ReferenceNumber || "—"}
+                </div>
+                <div className="hidden md:block">{p.ReferenceNumber || "—"}</div>
+
+                <div>
                   <button
                     onClick={() => handleDeletePayment(i)}
                     className="text-red-600 hover:underline"
@@ -420,9 +533,10 @@ interface Payment {
                     Eliminar
                   </button>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
         )}
 
         <div className="flex mt-10 gap-4 justify-end">

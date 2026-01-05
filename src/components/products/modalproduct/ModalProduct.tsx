@@ -8,6 +8,7 @@ import {
   updateProduct,
 } from "../../../api/Post/ProductApi/ProductApi";
 import { getCategory } from "../../../api/Post/CategoryApi/CategoryApi";
+import { getIvaDatos } from "../../../api/Post/ivaApi/IvaApi";
 
 interface ModalProductProps {
   onClose: () => void;
@@ -19,6 +20,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
     Description: "",
     ID_Category: 0,
     Code: "",
+    Codesat: "",
     StockData: [
       {
         Description: "",
@@ -28,6 +30,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
       },
     ],
     Imagenes: [] as { file: File; preview: string }[],
+    ID_Iva: 0,
   });
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -42,8 +45,10 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
             Description: data.Description,
             ID_Category: data.ID_Category,
             Code: data.Code,
+            Codesat: data.Codesat,
             StockData: data.Stock || [],
             Imagenes: data.Imagenes,
+            ID_Iva: data.ID_Iva,
           });
         } catch (error) {
           console.error("Error cargando producto:", error);
@@ -57,6 +62,11 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
   const { data: categoryData } = useQuery({
     queryKey: ["category"],
     queryFn: getCategory,
+  });
+
+  const { data: ivaData } = useQuery({
+    queryKey: ["iva"],
+    queryFn: getIvaDatos,
   });
 
   const queryClient = useQueryClient();
@@ -131,6 +141,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
       Description: "",
       ID_Category: 0,
       Code: "",
+      Codesat: "",
       StockData: [
         {
           Description: "",
@@ -140,6 +151,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
         },
       ],
       Imagenes: [],
+      ID_Iva: 0,
     });
 
     if (fileInputRef.current) {
@@ -160,7 +172,8 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
     if (
       !products.Description.trim() ||
       !products.ID_Category ||
-      !products.Code.trim()
+      !products.Code.trim() ||
+      !products.ID_Iva
     ) {
       return false;
     }
@@ -206,8 +219,8 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-xl font-bold text-gray-800">Crear Producto</h2>
@@ -217,17 +230,16 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Inputs básicos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
               id="Description"
               value={products.Description}
-              onChange={(e) =>
-                setProducts({ ...products, Description: e.target.value })
-              }
+              onChange={(e) => setProducts({ ...products, Description: e.target.value })}
               placeholder="Nombre del producto"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
             />
 
             <select
@@ -235,7 +247,7 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
               name="ID_Category"
               value={products.ID_Category}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Selecciona categoría</option>
               {categoryData?.data?.map((cat: any) => (
@@ -256,12 +268,28 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
               id="Code"
               name="Code"
               value={products.Code}
-              onChange={(e) =>
-                setProducts({ ...products, Code: e.target.value })
-              }
+              onChange={(e) => setProducts({ ...products, Code: e.target.value })}
               placeholder="Código del producto"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
             />
+
+            <select
+              id="Iva"
+              name="ID_Iva"
+              value={products.ID_Iva}
+              onChange={(e) => {
+                setProducts({ ...products, ID_Iva: Number(e.target.value) });
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Selecciona IVA</option>
+              {ivaData?.data?.map((cat: any) => (
+                <option key={cat.ID_Iva} value={cat.ID_Iva}>
+                  {cat.Description}
+                </option>
+              ))}
+            </select>
+
 
             {/* Input de imágenes */}
             <input
@@ -270,16 +298,26 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
               onChange={handleImageChange}
               accept="image/*"
               multiple
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
+            />
+
+            <input
+              type="text"
+              id="Codesat"
+              name="Codesat"
+              value={products.Codesat}
+              onChange={(e) => setProducts({ ...products, Codesat: e.target.value })}
+              placeholder="Código SAT"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
           {/* Galería de imágenes */}
-          <div className="mt-2 mb-2 grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
             {products.Imagenes.map((img, index) => (
               <div
                 key={index}
-                className="relative w-30 h-30 border rounded-md overflow-hidden"
+                className="relative w-full aspect-square border rounded-md overflow-hidden"
               >
                 <img
                   src={img.preview || `${import.meta.env.VITE_API_URL_IMAGES}${img}`}
@@ -298,62 +336,65 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
           </div>
 
           {/* Stock del producto */}
-          {products.StockData.map((stock, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 md:grid-cols-4 gap-4 border-t pt-2 pb-2"
-            >
-              <input
-                type="text"
-                value={stock.Description}
-                onChange={(e) => {
-                  const newStock = [...products.StockData];
-                  newStock[index].Description = e.target.value;
-                  setProducts({ ...products, StockData: newStock });
-                }}
-                placeholder="Descripción"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+          <div className="space-y-4">
+            {products.StockData.map((stock, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 border-t pt-2"
+              >
+                <input
+                  type="text"
+                  value={stock.Description}
+                  onChange={(e) => {
+                    const newStock = [...products.StockData];
+                    newStock[index].Description = e.target.value;
+                    setProducts({ ...products, StockData: newStock });
+                  }}
+                  placeholder="Descripción"
+                  className="w-full px-2 py-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
 
-              <input
-                type="number"
-                value={stock.Amount === 0 ? "" : stock.Amount}
-                onChange={(e) => {
-                  const newStock = [...products.StockData];
-                  newStock[index].Amount = Number(e.target.value);
-                  setProducts({ ...products, StockData: newStock });
-                }}
-                placeholder="Stock"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+                <input
+                  type="number"
+                  value={stock.Amount === 0 ? "" : stock.Amount}
+                  onChange={(e) => {
+                    const newStock = [...products.StockData];
+                    newStock[index].Amount = Number(e.target.value);
+                    setProducts({ ...products, StockData: newStock });
+                  }}
+                  placeholder="Stock"
+                  className="w-full px-2 py-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
 
-              <input
-                type="number"
-                value={stock.Saleprice === 0 ? "" : stock.Saleprice}
-                onChange={(e) => {
-                  const newStock = [...products.StockData];
-                  newStock[index].Saleprice = Number(e.target.value);
-                  setProducts({ ...products, StockData: newStock });
-                }}
-                placeholder="Precio venta"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+                <input
+                  type="number"
+                  value={stock.Saleprice === 0 ? "" : stock.Saleprice}
+                  onChange={(e) => {
+                    const newStock = [...products.StockData];
+                    newStock[index].Saleprice = Number(e.target.value);
+                    setProducts({ ...products, StockData: newStock });
+                  }}
+                  placeholder="Precio venta"
+                  className="w-full px-2 py-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
 
-              <input
-                type="number"
-                value={stock.Purchaseprice === 0 ? "" : stock.Purchaseprice}
-                onChange={(e) => {
-                  const newStock = [...products.StockData];
-                  newStock[index].Purchaseprice = Number(e.target.value);
-                  setProducts({ ...products, StockData: newStock });
-                }}
-                placeholder="Precio compra"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-            </div>
-          ))}
+                <input
+                  type="number"
+                  value={stock.Purchaseprice === 0 ? "" : stock.Purchaseprice}
+                  onChange={(e) => {
+                    const newStock = [...products.StockData];
+                    newStock[index].Purchaseprice = Number(e.target.value);
+                    setProducts({ ...products, StockData: newStock });
+                  }}
+                  placeholder="Precio compra"
+                  className="w-full px-2 py-2 border rounded-md focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+            ))}
+          </div>
 
-          <div className="flex justify-center mt-4 gap-4">
+          {/* Botones variantes */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button type="button" onClick={addInput} className={styles.buttonfacturar}>
               Añadir variante
             </button>
@@ -362,7 +403,8 @@ const ModalProduct = ({ onClose, onEdit }: ModalProductProps) => {
             </button>
           </div>
 
-          <div className="flex justify-center mt-6">
+          {/* Botón Guardar */}
+          <div className="flex justify-center">
             <button
               type="submit"
               className={`${styles.buttonAgregarCliente} ${

@@ -22,19 +22,19 @@ interface CustomersListProps {
   onEdit: (ids: number[]) => void;
   resetChecks: boolean;
   onResetComplete: () => void;
+  searchTerm?: string;
 }
 
-const CustomersList = ({ onEdit, resetChecks,  onResetComplete}: CustomersListProps) => {
+const CustomersList = ({ onEdit, resetChecks,  onResetComplete, searchTerm}: CustomersListProps) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const { data } = useQuery({
-    queryKey: ['clientes', page, limit],
-    queryFn: () => getClientes({ page, limit }),
+    queryKey: ['clientes', page, limit, searchTerm],
+    queryFn: () => getClientes({ page, limit, searchTerm }),
     placeholderData: (prev) => prev,
   });
-
   
   useEffect(() => {
     if (resetChecks) {

@@ -7,6 +7,7 @@ interface CartItem {
   StockDescription: string;
   Saleprice: number;
   Quantity: number;
+  Iva: number;
   Imagen?: string;
 }
 
@@ -95,6 +96,8 @@ interface CartContextProps {
   clearCart: () => void;
   increaseQty: (ids: { ID_Product: number; ID_Stock: number }) => void;
   decreaseQty: (ids: { ID_Product: number; ID_Stock: number }) => void;
+  getSubTotal: () => number;
+  getIva: () => number;
   getTotal: () => number;
 }
 
@@ -129,12 +132,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const decreaseQty = (ids: { ID_Product: number; ID_Stock: number }) =>
     dispatch({ type: "DECREASE_QTY", payload: ids });
 
-  const getTotal = () =>
+  const getSubTotal = () =>
     state.items.reduce((acc: number, item: { Saleprice: number; Quantity: number; }) => acc + item.Saleprice * item.Quantity, 0);
+
+  // Total del IVA
+  const getIva = () => state.items.reduce((acc:number, item: {Saleprice: number; Quantity: number; Iva: number}) => acc + (item.Saleprice * item.Quantity * item.Iva), 0);
+
+  // Total general (subtotal + IVA)
+  const getTotal = () => getSubTotal() + getIva();
 
   return (
     <CartContext.Provider
-      value={{ state, addItem, removeItem, clearCart, increaseQty, decreaseQty, getTotal }}
+      value={{ state, addItem, removeItem, clearCart, increaseQty, decreaseQty, getSubTotal, getIva, getTotal }}
     >
       {children}
     </CartContext.Provider>

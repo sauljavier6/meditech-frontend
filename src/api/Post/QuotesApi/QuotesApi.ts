@@ -19,6 +19,8 @@ interface SaleData {
   ID_User: number;
   Total: number;
   Balance_Total: number;
+  Subtotal: number;
+  Iva: number;
   ID_State: number;
   Payment: PaymentSale[];
   ID_Operador: number;
@@ -31,8 +33,8 @@ interface SaleDataWithID extends SaleData {
 }
 
 
-export const getQuotes = async ({ page = 1, limit = 10 }) => {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/quotes?page=${page}&limit=${limit}`, {
+export const getQuotes = async ({ page = 1, limit = 10, searchTerm='' }) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/quotes?page=${page}&limit=${limit}&searchTerm=${searchTerm}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

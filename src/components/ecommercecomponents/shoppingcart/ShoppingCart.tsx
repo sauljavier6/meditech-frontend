@@ -2,7 +2,7 @@ import { useCart } from "../../../context/CartContext";
 import { useNavigate } from 'react-router-dom';
 
 export default function ShoppingCart() {
-  const { state, removeItem, increaseQty, decreaseQty, clearCart, getTotal } = useCart();
+  const { state, removeItem, increaseQty, decreaseQty, clearCart, getSubTotal, getIva, getTotal } = useCart();
   const navigate = useNavigate();
 
 
@@ -70,10 +70,24 @@ export default function ShoppingCart() {
               </div>
             ))}
 
-            <div className="flex justify-between items-center font-bold text-gray-800 text-lg border-t pt-4">
-              <span>Total:</span>
-              <span>${getTotal().toFixed(2)}</span>
+
+            <div className="border-t mt-4 pt-4 space-y-2 text-gray-800">
+              <div className="flex justify-between items-center text-base">
+                <span>Subtotal:</span>
+                <span>${getSubTotal().toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-base">
+                <span>IVA:</span>
+                <span>${getIva().toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
+                <span>Total:</span>
+                <span>${getTotal().toFixed(2)}</span>
+              </div>
             </div>
+
 
             <button
               onClick={clearCart}

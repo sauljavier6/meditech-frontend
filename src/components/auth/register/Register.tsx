@@ -106,9 +106,10 @@ export default function Register({ onBack }: LoginProps) {
             <img
                 src={URL.createObjectURL(formData.imagen)}
                 alt="Vista previa"
-                className="mt-4 max-w-xs rounded"
+                className="mt-4 w-80 h-80 rounded object-cover"
             />
             )}
+
             <div className="mb-6">
             <label className="block text-sm font-medium">FOTO</label>
             <input

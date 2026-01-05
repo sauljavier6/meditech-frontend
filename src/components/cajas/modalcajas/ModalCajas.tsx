@@ -1,69 +1,139 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { toast } from 'react-toastify';
-import { postBatch } from '../../../api/Post/BatchApi/BatchApi';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import {
+  getBatchbyIs,
+  postBatch,
+  putBatch,
+} from "../../../api/Post/BatchApi/BatchApi";
 
-interface ModalCajasProps { 
+interface ModalCajasProps {
   onClose: () => void;
+  onEdit?: number;
 }
 
-const ModalCajas = ({ onClose }: ModalCajasProps) => {
+const ModalCajas = ({ onClose, onEdit }: ModalCajasProps) => {
   const [formData, setFormData] = useState({
-    operador: getIdUsuario() || '',
+    operador: getIdUsuario() || "",
     lote: createBatch(),
-    fecha: getTodayDate() || '',
+    fecha: getTodayDate() || "",
+    estado: true,
   });
+
+  useEffect(() => {
+    if (onEdit) {
+      fetchBatch(onEdit);
+    }
+  }, [onEdit]);
+
+  const fetchBatch = async (id: number) => {
+    try {
+      const res = await getBatchbyIs(id);
+      const data = res.data;
+
+      setFormData((prev) => ({
+        ...prev,
+        lote: data.Lote,
+        estado: data.State ?? data.Estado,
+        fecha: data.Date ? data.Date.slice(0, 10) : "",
+        operador: String(data.ID_User),
+      }));
+    } catch (error) {
+      console.error("Error al obtener el lote:", error);
+    }
+  };
 
   function getTodayDate() {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return today.toISOString().split("T")[0];
   }
 
   function createBatch() {
     const now = new Date();
-    const datePart = now.toISOString().split('T')[0].replace(/-/g, '');
+    const datePart = now.toISOString().split("T")[0].replace(/-/g, "");
     const randomPart = Math.floor(1000 + Math.random() * 9000);
-    const idusuario = localStorage.getItem('idusuario')
+    const idusuario = localStorage.getItem("idusuario");
     return `${datePart}-${idusuario}-${randomPart}`;
   }
 
   function getIdUsuario() {
-    const idusuario = localStorage.getItem('idusuario')
+    const idusuario = localStorage.getItem("idusuario");
     return idusuario;
   }
 
-    const queryClient = useQueryClient();
-    
-    const { mutate } = useMutation({
+  const queryClient = useQueryClient();
+
+  const { mutate } = useMutation({
     mutationFn: postBatch,
     onError: (error) => {
-        toast.error(`${error.message}`, {
+      toast.error(`${error.message}`, {
         position: "top-right",
-        });
+      });
     },
     onSuccess: () => {
-        setFormData({
-          operador: '',
-          lote: '',
-          fecha: '',
-        });
-        onClose();
-        toast.success("Lote creado con éxito", {
+      setFormData({
+        operador: "",
+        lote: "",
+        fecha: "",
+        estado: true,
+      });
+      onClose();
+      toast.success("Lote creado con éxito", {
         position: "top-right",
         progressClassName: "custom-progress",
-        });
-        queryClient.invalidateQueries({ queryKey: ['batchs'] });
+      });
+      queryClient.invalidateQueries({ queryKey: ["batchs"] });
     },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const { mutate: editMutate } = useMutation({
+    mutationFn: putBatch,
+    onError: (error) => {
+      toast.error(`${error.message}`, {
+        position: "top-right",
+      });
+    },
+    onSuccess: () => {
+      setFormData({
+        operador: "",
+        lote: "",
+        fecha: "",
+        estado: true,
+      });
+      onClose();
+      toast.success("Lote cerrado con éxito", {
+        position: "top-right",
+        progressClassName: "custom-progress",
+      });
+      queryClient.invalidateQueries({ queryKey: ["batchs"] });
+    },
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Datos del lote:', formData);
-    mutate(formData);
+    if (onEdit) {
+      const data = {
+        id_batch: onEdit,
+        operador: formData.operador,
+        lote: formData.lote,
+        fecha: formData.fecha,
+        estado: formData.estado,
+      };
+
+      editMutate(data);
+    } else {
+      mutate(formData);
+    }
+
     onClose();
   };
 
@@ -105,6 +175,18 @@ const ModalCajas = ({ onClose }: ModalCajasProps) => {
               placeholder="Fecha"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
+
+            <select
+              name="estado"
+              value={String(formData.estado)}
+              onChange={(e) =>
+                setFormData({ ...formData, estado: e.target.value === "true" })
+              }
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
           </div>
 
           {/* Botón guardar */}

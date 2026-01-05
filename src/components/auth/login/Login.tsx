@@ -14,9 +14,12 @@ interface DecodedToken {
   ID_User: number;
   Name: string;
   ID_Rol: number;
+  Rol: string;
+  Imagen: string;
   exp: number;
   iat: number;
 }
+
 
 export default function Login({ onRegister }: LoginProps) {
     const [formData, setFormData] = useState({
@@ -27,11 +30,12 @@ export default function Login({ onRegister }: LoginProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (userData?.ID_Rol === 2 || userData?.ID_Rol === 3) {
-      navigate('/');
-    }
-    else if (userData?.ID_Rol === 1 || userData?.ID_Rol === 4) {
-      navigate('/pos/dashboard');
+    if (!userData?.Rol) return;
+
+    if (["Administrador", "Trabajador"].includes(userData.Rol)) {
+      navigate("/pos/dashboard");
+    } else {
+      navigate("/");
     }
   }, [userData, navigate]);
 
@@ -43,14 +47,14 @@ export default function Login({ onRegister }: LoginProps) {
         });
     },
     onSuccess: (data) => {
-        localStorage.setItem('token', data.token);
-        const decoded = jwtDecode<DecodedToken>(data.token);
-        localStorage.setItem('idusuario', decoded.ID_User.toString());
-        setUserData(decoded)
-        toast.success("Usuario logeado con éxito", {
+      localStorage.setItem("token", data.token);
+
+      const decoded = jwtDecode<DecodedToken>(data.token);
+      setUserData(decoded);
+
+      toast.success("Usuario logeado con éxito", {
         position: "top-right",
-        progressClassName: "custom-progress",
-        });
+      });
     },
     });
 
