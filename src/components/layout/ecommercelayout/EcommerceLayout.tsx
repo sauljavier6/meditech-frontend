@@ -38,21 +38,6 @@ const EcommerceLayout = () => {
     };
   }, []);
 
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   const searchProducts = async (term: string) => {
     if (!term) {
       setResults([]);
@@ -134,20 +119,22 @@ const EcommerceLayout = () => {
             </li>
           </ul>
         </div>
-
+      
         <button
           className="sm:hidden text-blue-800 focus:outline-none"
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuOpen(!isMenuOpen);
-          }}
-        >
+          onClick={() => { setMenuOpen(!isMenuOpen); }}>
           <img src="/icons/menu.png" alt="menu" className="w-6 h-6" />
         </button>
 
         {isMenuOpen && (
           <div
-            ref={menuRef}
+            className="fixed inset-0 z-40 bg-transparent"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+
+        {isMenuOpen && (
+          <div
             className="sm:hidden fixed top-[110px] left-0 w-full bg-white border-t shadow-md z-50 transition-transform transform duration-300"
           >
             <ul className="flex flex-col gap-4 p-4">

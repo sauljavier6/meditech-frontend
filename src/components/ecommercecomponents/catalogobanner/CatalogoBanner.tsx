@@ -76,8 +76,6 @@ function CatalogoBanner() {
     placeholderData: (prev) => prev,
   });
 
-  console.log('data', data);
-
   if (isLoading) {
     return <h2 className="text-2xl text-center p-10">Cargando las mejores ofertas...</h2>;
   }
