@@ -56,7 +56,7 @@ const CajasPage = () => {
                 onChange={handleSearchChange}
                 className="px-3 py-2 border border-gray-300 rounded-md w-full"
               />
-              {isAdmin || isTrabajador && (
+              {(isAdmin || isTrabajador) && (
               <button
                 onClick={handleOpen}
                 className={styles.buttonCrearProducto}
@@ -64,7 +64,7 @@ const CajasPage = () => {
                 Crear Lote
               </button>
               )}
-              {isAdmin || isTrabajador && (
+              {(isAdmin || isTrabajador) && (
               <button
                 onClick={handleOpenEdit}
                 disabled={!edit}

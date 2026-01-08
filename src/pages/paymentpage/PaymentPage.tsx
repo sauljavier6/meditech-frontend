@@ -63,8 +63,8 @@ function CheckoutFormInner() {
 
         console.log("Venta guardada:", savesale);
 
-        //clearCart();
-        //window.location.href = "/";
+        clearCart();
+        window.location.href = "/";
       }
     } catch (err) {
       console.error(err);

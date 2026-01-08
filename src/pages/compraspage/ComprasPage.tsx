@@ -62,7 +62,7 @@ const ComprasPage = () => {
             onChange={handleSearchChange}
             className="px-3 py-2 border border-gray-300 rounded-md w-full"
           />
-          {isAdmin || isTrabajador && (
+          {(isAdmin || isTrabajador) && (
           <button
             onClick={handleCreateCompra}
             className={styles.buttonCrearProducto}
@@ -70,7 +70,7 @@ const ComprasPage = () => {
             Registrar compra
           </button>
           )}
-          {isAdmin || isTrabajador && (
+          {(isAdmin || isTrabajador) && (
           <button
             onClick={handleDeleteProduct}
             disabled={selectedIds?.length === 0}
@@ -88,7 +88,7 @@ const ComprasPage = () => {
 
       
       <ComprasList onDelete={(id) => setSelectedIds(id)} resetChecks={resetChecks}
-      onResetComplete={() => setResetChecks(false)}/>
+      onResetComplete={() => setResetChecks(false)} searchTerm={searchTerm}/>
     </div>
      )}
 

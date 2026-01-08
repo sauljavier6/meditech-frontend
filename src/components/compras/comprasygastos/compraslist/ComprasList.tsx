@@ -26,23 +26,24 @@ interface ComprasProps {
   onDelete: (ids: number[]) => void;
   resetChecks: boolean;
   onResetComplete: () => void;
+  searchTerm: string;
 }
 
-const ComprasList = ({ onDelete, resetChecks, onResetComplete }: ComprasProps) => {
+const ComprasList = ({ onDelete, resetChecks, onResetComplete, searchTerm }: ComprasProps) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const { data } = useQuery({
-    queryKey: ['compras', page, limit],
-    queryFn: () => getCompras({ page, limit }),
+    queryKey: ['compras', page, limit, searchTerm],
+    queryFn: () => getCompras({ page, limit, searchTerm }),
     placeholderData: (prev) => prev,
   });
 
   console.log('data', data);
 
   useEffect(() => {
-    if (resetChecks) {
+    if (resetChecks) { 
       setSelectedIds([]);
       onDelete([]);
       onResetComplete(); 

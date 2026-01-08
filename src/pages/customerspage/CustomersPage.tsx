@@ -127,7 +127,7 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             onChange={handleSearchChange}
             className="px-3 py-2 border border-gray-300 rounded-md w-full"
           />
-          {isAdmin || isTrabajador&& (
+          {(isAdmin || isTrabajador) && (
           <button
             onClick={handleCreateCustomer}
             className={styles.buttonCrearProducto}
@@ -135,7 +135,7 @@ const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             Crear
           </button>
           )}
-          {isAdmin || isTrabajador&& (
+          {(isAdmin || isTrabajador) && (
           <button
             onClick={handleEditCustomer}
             disabled={isEdit.length === 0 || isEdit.length > 1}

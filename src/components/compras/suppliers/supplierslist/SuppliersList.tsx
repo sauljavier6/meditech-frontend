@@ -6,6 +6,7 @@ interface ModalSuppliersProps {
   onDelete: (ids: number[]) => void;
   resetChecks: boolean;
   onResetComplete: () => void;
+  searchTerm: string;
 }
 
 interface SuppliersEmail { 
@@ -25,17 +26,17 @@ interface Suppliers {
   Phone: SuppliersPhone,
 }
 
-const SuppliersList = ({ onDelete, resetChecks, onResetComplete }: ModalSuppliersProps) => {
+const SuppliersList = ({ onDelete, resetChecks, onResetComplete, searchTerm }: ModalSuppliersProps) => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const limit = 10;
 
   const { data } = useQuery({
-    queryKey: ['suppliers', page, limit],
-    queryFn: () => getSuppliers({ page, limit }),
+    queryKey: ['suppliers', page, limit, searchTerm],
+    queryFn: () => getSuppliers({ page, limit, searchTerm }),
     placeholderData: (prev) => prev,
   });
- 
+  
   useEffect(() => {
     if (resetChecks) {
       setSelectedIds([]);

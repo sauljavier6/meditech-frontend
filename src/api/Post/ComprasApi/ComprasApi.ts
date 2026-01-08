@@ -49,8 +49,8 @@ export const postCompra = async (saleData:buyData) => {
 };
 
 
-export const getCompras = async ({ page = 1, limit = 10 }) => {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/compras?page=${page}&limit=${limit}`, {
+export const getCompras = async ({ page = 1, limit = 10, searchTerm='' }) => {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/compras?page=${page}&limit=${limit}&searchTerm=${searchTerm}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

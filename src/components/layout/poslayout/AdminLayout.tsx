@@ -2,19 +2,29 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
+import { getAuthUser } from "../../../utils/auth";
 
 
 const AdminLayout = () => {
 type SubmenuKey = 'productos' | 'ventas' | 'cajas' | 'compras' | 'facturacion';
 const { isAdmin, isTrabajador } = useAuth();
 const [profileOpen, setProfileOpen] = useState(false);
-const storedImage = localStorage.getItem("img");
-const storedName = localStorage.getItem("name");
-const profileImage =
-  !storedImage || storedImage === "default.png"
-    ? "https://flowbite.com/docs/images/people/profile-picture-5.jpg"
-    : `${import.meta.env.VITE_API_URL_PROFILE}${storedImage}`;
 
+const user = getAuthUser();
+
+console.log("PROFILE URL:", import.meta.env.VITE_API_URL_PROFILE);
+console.log(
+  "FINAL IMG:",
+  !user?.Imagen || user?.Imagen === "default.png"
+    ? "default"
+    : `${import.meta.env.VITE_API_URL_PROFILE}${user?.Imagen}`
+);
+
+
+const profileImage =
+  !user?.Imagen || user?.Imagen === "default.png"
+    ? "https://flowbite.com/docs/images/people/profile-picture-5.jpg"
+    : `${import.meta.env.VITE_API_URL_PROFILE}${user?.Imagen}`;
 
 const [openSubmenus, setOpenSubmenus] = useState<Record<SubmenuKey, boolean>>({
   productos: false,
@@ -80,7 +90,7 @@ useEffect(() => {
                     <div className="absolute right-0 top-full mt-2 z-50 w-44 bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600">
                       <div className="px-4 py-3">
                         <p className="text-sm text-gray-900 dark:text-white">
-                          {storedName || "Nombre de usuario"}
+                          {user?.Name || "Nombre de usuario"}
                         </p>
                       </div>
 
